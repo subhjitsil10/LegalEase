@@ -9,11 +9,9 @@ export default function Navbar({ user, language, setLanguage, onOpenAuth, onOpen
         
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-            <Scale className="w-5 h-5" />
-          </div>
+          <img src="/favicon.svg" alt="LegalEase Logo" className="w-10 h-10 rounded-2xl shadow-md shadow-blue-500/20" />
           <div>
-            <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">LegalTech AI</h1>
+            <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">LegalEase</h1>
             <p className="text-[11px] text-slate-500 font-medium">Autonomous Legal Intelligence & Playbook Compliance</p>
           </div>
         </div>

@@ -30,7 +30,7 @@ if not api_key:
 client = genai.Client(api_key=api_key)
 
 st.set_page_config(
-    page_title="LegalTech AI • Enterprise Intelligence",
+    page_title="LegalEase • Enterprise Intelligence",
     page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -488,10 +488,10 @@ def send_real_otp(receiver_email, otp_code):
             print("GMAIL credentials missing in environment.")
             return False
         msg = MIMEMultipart()
-        msg['From'] = f"LegalTech AI Portal <{gmail_user}>"
+        msg['From'] = f"LegalEase Portal <{gmail_user}>"
         msg['To'] = receiver_email
-        msg['Subject'] = "Secure Verification Code • LegalTech AI"
-        body = f"Hello,\n\nYour secure 4-digit verification code is: {otp_code}\n\nUse this code to complete your access to LegalTech AI. This code will expire shortly."
+        msg['Subject'] = "Secure Verification Code • LegalEase"
+        body = f"Hello,\n\nYour secure 4-digit verification code is: {otp_code}\n\nUse this code to complete your access to LegalEase. This code will expire shortly."
         msg.attach(MIMEText(body, 'plain'))
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
@@ -953,7 +953,7 @@ with st.sidebar:
         """, unsafe_allow_html=True)
         
     else:
-        st.markdown("### ⚖️ LegalTech AI")
+        st.markdown("### ⚖️ LegalEase")
         st.markdown("<p style='color: #64748b; font-size: 0.88rem;'>Enterprise Legal Intelligence Platform</p>", unsafe_allow_html=True)
         st.markdown("---")
         st.markdown("<div style='background: #eff6ff; border-left: 3px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 0.84rem; color: #1e40af;'>👀 <strong>Website Preview Mode:</strong> Explore features and sample workflows. Sign in to upload and analyze files.</div>", unsafe_allow_html=True)
@@ -983,7 +983,7 @@ with col_nav_brand:
         <div style="display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 2rem;">⚖️</span>
             <div>
-                <h2 style="margin: 0; font-size: 1.6rem; line-height: 1.1;" class="brand-title">LegalTech AI</h2>
+                <h2 style="margin: 0; font-size: 1.6rem; line-height: 1.1;" class="brand-title">LegalEase</h2>
                 <p style="margin: 0; color: #64748b; font-size: 0.82rem;">Autonomous Legal Intelligence & Playbook Compliance</p>
             </div>
         </div>
@@ -1384,6 +1384,6 @@ st.markdown("""
             <span>✅ AI Legal Framework Certified</span>
             <span>⚖️ Bar Association Standardized Playbook</span>
         </div>
-        <p style="margin-top: 18px; font-size: 0.75rem; color: #94a3b8;">© 2026 LegalTech AI Verification Portal. All rights reserved.</p>
+        <p style="margin-top: 18px; font-size: 0.75rem; color: #94a3b8;">© 2026 LegalEase Verification Portal. All rights reserved.</p>
     </div>
 """, unsafe_allow_html=True)

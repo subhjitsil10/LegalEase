@@ -61,20 +61,20 @@ def send_real_otp_email(receiver_email, otp_code):
             return False
             
         msg = MIMEMultipart()
-        msg['From'] = f"LegalTech AI Security <{GMAIL_USER}>"
+        msg['From'] = f"LegalEase Security <{GMAIL_USER}>"
         msg['To'] = receiver_email
-        msg['Subject'] = "Your Secure Verification Code • LegalTech AI"
+        msg['Subject'] = "Your Secure Verification Code • LegalEase"
         
         body = f"""Hello,
 
 Your secure 4-digit verification code is: {otp_code}
 
-Use this code to complete your access to LegalTech AI. This code will expire shortly.
+Use this code to complete your access to LegalEase. This code will expire shortly.
 
 If you did not request this code, please ignore this email.
 
 Best regards,
-LegalTech AI Security Team
+LegalEase Security Team
 """
         msg.attach(MIMEText(body, 'plain'))
         

@@ -144,11 +144,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         {step === 'request_otp' && (
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 rounded-xl bg-blue-100/80 text-blue-700">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
+              <img src="/favicon.svg" alt="LegalEase" className="w-10 h-10 rounded-xl shadow-sm" />
               <div>
-                <h3 className="text-xl font-extrabold text-slate-900">Secure Sign In</h3>
+                <h3 className="text-xl font-extrabold text-slate-900">Sign In to LegalEase</h3>
                 <p className="text-xs text-slate-500">Access enterprise legal audits & AI counsel</p>
               </div>
             </div>

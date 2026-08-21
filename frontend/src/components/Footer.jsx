@@ -21,7 +21,7 @@ export default function Footer() {
         </div>
 
         <p className="text-[11px] text-slate-400">
-          © 2026 LegalTech AI Verification Portal. Built for high-stakes legal compliance and contract risk mitigation.
+          © 2026 LegalEase Verification Portal. Built for high-stakes legal compliance and contract risk mitigation.
         </p>
 
       </div>

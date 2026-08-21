@@ -15,7 +15,7 @@ from auth import (
 )
 from ai_service import analyze_legal_document, chat_with_legal_counsel
 
-app = FastAPI(title="LegalTech AI - Enterprise Legal Intelligence API", version="2.0.0")
+app = FastAPI(title="LegalEase - Enterprise Legal Intelligence API", version="2.0.0")
 
 # Enable CORS for frontend
 app.add_middleware(
