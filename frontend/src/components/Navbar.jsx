@@ -40,7 +40,7 @@ export default function Navbar({ user, language, setLanguage, onOpenAuth, onOpen
               className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>₹499/mo</span>
+              <span>₹199/mo</span>
             </button>
           ) : (
             <span className="calm-pill py-1 px-3 text-xs bg-emerald-50 text-emerald-700 border-emerald-200">

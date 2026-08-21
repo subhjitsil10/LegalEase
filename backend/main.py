@@ -2,11 +2,12 @@ import os
 import time
 import json
 import random
+from contextlib import asynccontextmanager
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 from database import init_db, get_db
 from auth import (
@@ -15,7 +16,16 @@ from auth import (
 )
 from ai_service import analyze_legal_document, chat_with_legal_counsel
 
-app = FastAPI(title="LegalEase - Enterprise Legal Intelligence API", version="2.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+app = FastAPI(
+    title="LegalEase - Enterprise Legal Intelligence API",
+    version="2.0.0",
+    lifespan=lifespan
+)
 
 # Enable CORS for frontend
 app.add_middleware(
@@ -30,11 +40,6 @@ app.add_middleware(
 UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
-
-# Initialize database tables on startup
-@app.on_event("startup")
-def startup_event():
-    init_db()
 
 # Dependency to extract and verify authenticated user
 def get_current_user(authorization: Optional[str] = Header(None)):
@@ -238,7 +243,7 @@ async def analyze_document(
             return {
                 "success": False,
                 "quota_exceeded": True,
-                "error": "You have utilized all 3 free document compliance audits. Upgrade to Pro Monthly (₹499/mo) or Annual (₹5,000/yr) to continue auditing documents."
+                "error": "You have utilized all 3 free document compliance audits. Upgrade to Pro Monthly (₹199/mo) or Annual (₹1,999/yr) to continue auditing documents."
             }
             
     file_bytes = await file.read()
@@ -293,7 +298,7 @@ def get_plans():
             {
                 "id": "pro_monthly",
                 "name": "Pro Monthly Plan",
-                "price": 499,
+                "price": 199,
                 "period": "month",
                 "features": [
                     "Unlimited Legal Document Audits",
@@ -306,7 +311,7 @@ def get_plans():
             {
                 "id": "enterprise_annual",
                 "name": "Enterprise Annual Plan",
-                "price": 5000,
+                "price": 1999,
                 "period": "year",
                 "badge": "⭐ BEST VALUE • SAVE 17%",
                 "features": [

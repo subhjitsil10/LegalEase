@@ -36,7 +36,7 @@ export default function PricingSection({ onSelectPlan }) {
             <span className="doc-tag text-[11px] px-2 py-0.5 mb-2 bg-blue-50 text-blue-700 border-blue-200">POPULAR</span>
             <h4 className="font-bold text-slate-900 text-base">Pro Monthly</h4>
             <div className="text-2xl font-extrabold text-blue-700 my-2">
-              ₹499 <span className="text-xs font-normal text-slate-500">/ month</span>
+              ₹199 <span className="text-xs font-normal text-slate-500">/ month</span>
             </div>
             <ul className="space-y-2 text-xs text-slate-700 mt-3">
               <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-blue-600" /> <strong>Unlimited</strong> Audits</li>
@@ -46,11 +46,11 @@ export default function PricingSection({ onSelectPlan }) {
             </ul>
           </div>
           <button
-            onClick={() => onSelectPlan({ name: 'Pro Monthly', price: 499, period: 'month' })}
+            onClick={() => onSelectPlan({ name: 'Pro Monthly', price: 199, period: 'month' })}
             className="w-full mt-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Upgrade to Pro • ₹499</span>
+            <span>Upgrade to Pro • ₹199</span>
           </button>
         </div>
 
@@ -63,7 +63,7 @@ export default function PricingSection({ onSelectPlan }) {
             <span className="doc-tag text-[11px] px-2 py-0.5 mb-2 bg-indigo-50 text-indigo-700 border-indigo-200">BEST VALUE</span>
             <h4 className="font-bold text-slate-900 text-base">Enterprise Annual</h4>
             <div className="text-2xl font-extrabold text-indigo-700 my-2">
-              ₹5,000 <span className="text-xs font-normal text-slate-500">/ year</span>
+              ₹1,999 <span className="text-xs font-normal text-slate-500">/ year</span>
             </div>
             <ul className="space-y-2 text-xs text-slate-700 mt-3">
               <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-indigo-600" /> Everything in Pro</li>
@@ -73,11 +73,11 @@ export default function PricingSection({ onSelectPlan }) {
             </ul>
           </div>
           <button
-            onClick={() => onSelectPlan({ name: 'Enterprise Annual', price: 5000, period: 'year' })}
+            onClick={() => onSelectPlan({ name: 'Enterprise Annual', price: 1999, period: 'year' })}
             className="w-full mt-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Choose Annual • ₹5,000</span>
+            <span>Choose Annual • ₹1,999</span>
           </button>
         </div>
 

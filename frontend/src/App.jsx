@@ -99,6 +99,7 @@ export default function App() {
         <DocumentWorkspace
           user={user}
           language={language}
+          setLanguage={setLanguage}
           onOpenAuth={() => setIsAuthOpen(true)}
           onOpenSubscription={() => setIsSubscriptionOpen(true)}
           onAnalysisSuccess={handleAnalysisSuccess}

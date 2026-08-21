@@ -77,7 +77,7 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
                 <span className="doc-tag text-[11px] px-2.5 py-0.5 mb-2">POPULAR</span>
                 <h4 className="text-lg font-bold text-slate-900">Pro Monthly Plan</h4>
                 <div className="text-3xl font-extrabold text-blue-700 my-2">
-                  ₹499 <span className="text-xs font-normal text-slate-500">/ month</span>
+                  ₹199 <span className="text-xs font-normal text-slate-500">/ month</span>
                 </div>
                 <p className="text-xs text-slate-500 mb-4">Ideal for freelancers, founders, and independent contractors.</p>
                 <ul className="space-y-2 text-xs text-slate-700">
@@ -101,10 +101,10 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedPlan({ name: 'Pro Monthly', price: 499, period: 'month' })}
+                onClick={() => setSelectedPlan({ name: 'Pro Monthly', price: 199, period: 'month' })}
                 className="w-full mt-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all"
               >
-                Choose Monthly • ₹499
+                Choose Monthly • ₹199
               </button>
             </div>
 
@@ -117,7 +117,7 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
                 <span className="doc-tag text-[11px] px-2.5 py-0.5 mb-2 bg-blue-50 text-blue-700 border-blue-200">BEST VALUE</span>
                 <h4 className="text-lg font-bold text-slate-900">Enterprise Annual</h4>
                 <div className="text-3xl font-extrabold text-blue-700 my-2">
-                  ₹5,000 <span className="text-xs font-normal text-slate-500">/ year</span>
+                  ₹1,999 <span className="text-xs font-normal text-slate-500">/ year</span>
                 </div>
                 <p className="text-xs text-slate-500 mb-4">Designed for legal practitioners, agencies, and enterprise teams.</p>
                 <ul className="space-y-2 text-xs text-slate-700">
@@ -141,10 +141,10 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedPlan({ name: 'Enterprise Annual', price: 5000, period: 'year' })}
+                onClick={() => setSelectedPlan({ name: 'Enterprise Annual', price: 1999, period: 'year' })}
                 className="w-full mt-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg transition-all"
               >
-                Choose Annual • ₹5,000
+                Choose Annual • ₹1,999
               </button>
             </div>
 
