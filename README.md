@@ -1,79 +1,98 @@
-﻿# ⚖️ LegalTech AI • Enterprise Legal Document Intelligence
+# ⚖️ LegalTech AI • Enterprise Legal Intelligence Platform
 
-An autonomous, multi-modal Legal Intelligence & Playbook Compliance platform built with **Streamlit** and powered by **Google Gemini 3.6 Flash**. 
+An enterprise-grade, autonomous legal document intelligence and contract compliance platform. Powered by **Google Gemini 3.6 Flash**, **FastAPI (Python)**, and **React + Vite + Tailwind CSS**.
 
-Designed to instantly audit contracts, leases, NDAs, and employment agreements against bar-standard legal playbooks, flag hidden risks and unfair clauses, synthesize audio executive summaries, and provide an interactive AI legal counsel assistant.
-
----
-
-## ✨ Features
-
-- 🌌 **Eye-Soothing Aurora Mesh Gradient UI**: Modern, liquid glassmorphic design with subtle glowing light orbs, frosted crystal acrylic cards, and clean typography.
-- 👀 **Website Preview & Contextual Auth Flow**: Guest users can preview all platform features, sample playbooks, and supported document classes on load. Interacting with upload/scan triggers a secure modal popup.
-- 🔐 **Multi-Factor Verification & Real OTP**: Complete 3-step authentication with visual/audio CAPTCHA, real SMTP-dispatched 4-digit OTP with countdown timer, and profile setup.
-- 🛡️ **Phase 0 Strict Legal Document Verification**: Strictly rejects non-legal files (memes, scenery, food, receipts, notes) with standard safety messages without leaking or describing image details.
-- 📑 **Comprehensive Legal Playbook Auditing**: Evaluates non-competes, IP assignments, unilateral termination, unlimited liability, rent escalation, and jurisdictional clauses.
-- 🌐 **Multilingual Output**: Fluent generation in **English**, **Hindi (हिंदी)**, and **Bangla (বাংলা)**.
-- 🔊 **Voice Synthesis**: Generates instant audio briefings of the legal audit report via `gTTS`.
-- 💬 **Interactive AI Legal Counsel**: Context-aware legal Q&A chatbot to interrogate specific clauses, phrasing, and legal implications in real-time.
+Featuring an eye-soothing **Aurora Mesh Gradient** with liquid frosted glass surfaces, multi-user authentication with visual & audio CAPTCHA, real 256-bit email OTP, persistent SQLite profiles, 3-document free tier quota, and a subscription revenue ledger.
 
 ---
 
-## 🛠️ Tech Stack
+## 🌟 Key Architecture & Capabilities
 
-- **Frontend & App Framework**: [Streamlit](https://streamlit.io/)
-- **LLM / Multimodal AI**: [Google GenAI SDK](https://github.com/google/generative-ai-python) (`gemini-3.6-flash`)
-- **Security & CAPTCHA**: `captcha` (Image & Audio), `smtplib` (Real OTP Delivery)
-- **Audio Processing**: `gTTS` (Google Text-to-Speech)
-- **Environment Management**: `python-dotenv`
+1. **⚡ Full-Stack Multi-User Architecture**:
+   - **Frontend**: React + Vite + Tailwind CSS + Lucide Icons. Fluid single-popup modals with zero full-page reload glitches.
+   - **Backend**: FastAPI (Python 3.14) asynchronous REST API with SQLite multi-user database (`legaltech.db`).
+   - **Authentication**: Passwordless verification with visual Image CAPTCHA, Audio Code playback, and real Gmail SMTP 4-digit OTP.
+
+2. **🛡️ Centralized Legal Audit Playbook**:
+   - **Non-Compete & Restraints of Trade**: Audits post-termination duration, radius, and Indian Contract Act Section 27 unenforceability.
+   - **Intellectual Property (IP) Assignment**: Flags overbroad claims to personal side projects and pre-existing work.
+   - **Termination & Notice**: Detects unilateral cancellation and enforces 30-day bilateral notice minimums.
+   - **Indemnification & Liability Caps**: Eliminates unlimited personal liabilities.
+
+3. **🚫 Strict Phase 0 Legal Document Validation**:
+   - Rejects non-legal files (e.g. food photos, resumes, receipts, memes, landscapes) with the exact standardized message:
+     ```text
+     This is not a legal document please upload the correect one
+     ```
+
+4. **💎 Subscription & Revenue Architecture**:
+   - **Free Starter**: 3 Document Compliance Audits.
+   - **Pro Monthly (₹499 / month)**: Unlimited Document Audits, Priority GenAI Flash Speed, Full Voice Synthesis, 24/7 AI Legal Counsel.
+   - **Enterprise Annual (₹5,000 / year)**: Unlimited Everything + 2 Months Free (Save 17%) + Custom Firm Playbook Tuning.
+   - Backend ledger `revenue_ledger.json` securely tracks all financial transactions and payment methods (UPI, Cards, Net Banking).
+
+5. **🔊 Multilingual Voice Synthesis & AI Legal Counsel**:
+   - Generates instant audio briefings in English, Hindi (हिंदी), and Bangla (বাংলা) with `gTTS`.
+   - Universal 24/7 AI Legal Counsel chatbot for general questions or clause-by-clause document interrogation.
 
 ---
 
 ## 🚀 Quickstart Guide
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/<your-username>/<your-repo-name>.git
-cd <your-repo-name>
-```
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
 
-### 2. Set Up Virtual Environment
-```bash
-python -m venv venv
-
-# Windows
-.\venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure Environment Variables
-Create a `.env` file in the root directory (refer to `.env.example`):
+### 1. Environment Configuration
+Create a `.env` file in the root folder:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 GMAIL_USER=your_email@gmail.com
-GMAIL_APP_PASSWORD=your_16_digit_app_password_here
+GMAIL_APP_PASSWORD=your_gmail_app_password_here
+JWT_SECRET=your_jwt_secret_key_here
 ```
 
-### 5. Launch the Application
+### 2. Start the Full-Stack Application
+Using PowerShell:
+```powershell
+.\run.ps1
+```
+Or manually:
 ```bash
-streamlit run app.py
+# Terminal 1: Backend
+python backend/main.py
+
+# Terminal 2: Frontend
+cd frontend
+npm run dev
 ```
 
----
-
-## 🔒 Security & Privacy Notice
-- Documents uploaded for analysis are processed via temporary session buffers and purged immediately after completion.
-- API keys, credentials, and email credentials are never stored or hardcoded into the repository.
-- Disclaimer: This tool utilizes advanced language models and standard playbooks to identify potential contract risks. It does **not** substitute binding legal advice from a certified attorney.
+- **Frontend UI**: `http://localhost:5173`
+- **FastAPI Backend & Interactive API Docs**: `http://localhost:8000/docs`
 
 ---
 
-## 📄 License
-MIT License. Open for educational, hackathon, and non-commercial development.
+## 📁 Project Structure
+
+```text
+├── backend/
+│   ├── main.py              # FastAPI REST API endpoints
+│   ├── database.py          # SQLite database schema & connection
+│   ├── auth.py              # Visual/Audio CAPTCHA, SMTP OTP, JWT
+│   ├── ai_service.py        # Gemini 3.6 Flash integration & audio
+│   ├── playbook.py          # Centralized legal playbook rules
+│   └── requirements.txt     # Python backend dependencies
+├── frontend/
+│   ├── src/
+│   │   ├── components/      # Navbar, Hero, Workspace, Chatbot, Pricing, Footer
+│   │   ├── modals/          # AuthModal, ProfileModal, SubscriptionModal
+│   │   ├── api.js           # Centralized API client
+│   │   ├── App.jsx          # Main application container
+│   │   └── index.css        # Aurora mesh gradient & liquid glass styles
+│   └── package.json
+├── run.ps1                  # 1-click startup script
+├── start.bat                # Windows launcher
+├── .env.example
+├── .gitignore
+└── README.md
+```

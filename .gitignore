@@ -27,6 +27,17 @@ analysis_audio.mp3
 # Database & Revenue Ledgers
 revenue_ledger.json
 *.jsonl
+*.db
+backend/legaltech.db
+backend/temp_uploads/
+backend/uploads/
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.npm
+npm-debug.log*
 
 # Streamlit & IDE configs
 .streamlit/secrets.toml
@@ -36,4 +47,5 @@ revenue_ledger.json
 *.swo
 .DS_Store
 Thumbs.db
+
 
