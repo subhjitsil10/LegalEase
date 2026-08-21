@@ -1,4 +1,4 @@
-﻿# Environment & Secrets (CRITICAL)
+# Environment & Secrets (CRITICAL)
 .env
 *.env
 .env.local
@@ -24,6 +24,10 @@ temp_*
 captcha_audio.mp3
 analysis_audio.mp3
 
+# Database & Revenue Ledgers
+revenue_ledger.json
+*.jsonl
+
 # Streamlit & IDE configs
 .streamlit/secrets.toml
 .vscode/
@@ -32,3 +36,4 @@ analysis_audio.mp3
 *.swo
 .DS_Store
 Thumbs.db
+

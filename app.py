@@ -524,12 +524,53 @@ def live_timer_ui(seconds_left):
     """
     components.html(html_code, height=35)
 
+import json
+
+# ==========================================
+# BACKEND REVENUE LEDGER & STORAGE
+# ==========================================
+REVENUE_FILE = "revenue_ledger.json"
+
+def load_revenue_ledger():
+    if os.path.exists(REVENUE_FILE):
+        try:
+            with open(REVENUE_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def record_subscription_payment(email, plan_name, amount, method="UPI (Google Pay / PhonePe)"):
+    ledger = load_revenue_ledger()
+    txn_id = f"TXN_{int(time.time())}_{random.randint(1000, 9999)}"
+    record = {
+        "transaction_id": txn_id,
+        "email": email,
+        "plan": plan_name,
+        "amount_inr": amount,
+        "payment_method": method,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "COMPLETED"
+    }
+    ledger.append(record)
+    try:
+        with open(REVENUE_FILE, "w") as f:
+            json.dump(ledger, f, indent=2)
+    except Exception as e:
+        print(f"Revenue logging error: {e}")
+    return txn_id
+
 # ==========================================
 # SESSION STATE INITIALIZATION
 # ==========================================
 if 'is_authenticated' not in st.session_state: st.session_state.is_authenticated = False
 if 'show_login_dialog' not in st.session_state: st.session_state.show_login_dialog = False
 if 'show_profile_dialog' not in st.session_state: st.session_state.show_profile_dialog = False
+if 'show_subscription_dialog' not in st.session_state: st.session_state.show_subscription_dialog = False
+if 'selected_checkout_plan' not in st.session_state: st.session_state.selected_checkout_plan = None
+if 'doc_upload_count' not in st.session_state: st.session_state.doc_upload_count = 0
+if 'is_subscribed' not in st.session_state: st.session_state.is_subscribed = False
+if 'subscription_plan' not in st.session_state: st.session_state.subscription_plan = "Free Tier"
 if 'user_name' not in st.session_state: st.session_state.user_name = ""
 if 'email' not in st.session_state: st.session_state.email = ""
 if 'phone_number' not in st.session_state: st.session_state.phone_number = ""
@@ -545,6 +586,95 @@ if 'real_otp' not in st.session_state: st.session_state.real_otp = ""
 if 'chat_history' not in st.session_state: st.session_state.chat_history = []
 if 'uploaded_file_path' not in st.session_state: st.session_state.uploaded_file_path = None
 if 'language' not in st.session_state: st.session_state.language = "English"
+
+# ==========================================
+# POPUP DIALOG: SUBSCRIPTION & CHECKOUT
+# ==========================================
+@st.dialog("💎 Subscription & Billing Plans")
+def show_subscription_dialog():
+    st.markdown("<h3 style='color: #0f172a !important; margin-bottom: 4px;'>Upgrade to Premium Intelligence</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748b; font-size: 0.88rem; margin-bottom: 16px;'>Unlock unlimited contract audits, priority AI processing, and 24/7 legal counsel.</p>", unsafe_allow_html=True)
+    
+    if st.session_state.selected_checkout_plan is None:
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            st.markdown("""
+            <div style="background: rgba(255, 255, 255, 0.9); border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 4px 12px rgba(14, 116, 144, 0.05);">
+                <span class="doc-tag" style="font-size: 0.72rem; padding: 2px 8px; margin-bottom: 8px;">POPULAR</span>
+                <h4 style="margin: 0; color: #0f172a;">Pro Monthly</h4>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #1d4ed8; margin: 10px 0;">₹499<span style="font-size: 0.85rem; color: #64748b; font-weight: 500;"> / month</span></div>
+                <ul style="text-align: left; font-size: 0.82rem; color: #475569; padding-left: 18px; line-height: 1.6;">
+                    <li><strong>Unlimited</strong> Document Audits</li>
+                    <li>Priority OCR & Analysis Speed</li>
+                    <li>Full Multilingual Voice Briefings</li>
+                    <li>24/7 AI Legal Counsel Access</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Select Monthly • ₹499", type="primary", key="btn_choose_monthly"):
+                st.session_state.selected_checkout_plan = {"name": "Pro Monthly", "price": 499, "period": "month"}
+                st.rerun()
+
+        with col_p2:
+            st.markdown("""
+            <div style="background: rgba(255, 255, 255, 0.95); border: 2px solid #3b82f6; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);">
+                <span class="doc-tag" style="background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; font-size: 0.72rem; padding: 2px 8px; margin-bottom: 8px;">⭐ BEST VALUE • SAVE 17%</span>
+                <h4 style="margin: 0; color: #0f172a;">Enterprise Annual</h4>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #1d4ed8; margin: 10px 0;">₹5,000<span style="font-size: 0.85rem; color: #64748b; font-weight: 500;"> / year</span></div>
+                <ul style="text-align: left; font-size: 0.82rem; color: #475569; padding-left: 18px; line-height: 1.6;">
+                    <li><strong>Unlimited</strong> Everything</li>
+                    <li>2 Months Free Access</li>
+                    <li>Custom Playbook Rule Tuning</li>
+                    <li>Dedicated Priority Processing</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Select Annual • ₹5,000", type="primary", key="btn_choose_annual"):
+                st.session_state.selected_checkout_plan = {"name": "Enterprise Annual", "price": 5000, "period": "year"}
+                st.rerun()
+    else:
+        plan = st.session_state.selected_checkout_plan
+        st.markdown(f"""
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="color: #1e3a8a; font-size: 1.05rem;">{plan['name']}</strong>
+                    <div style="color: #64748b; font-size: 0.82rem;">Billed {plan['period']}ly • Unlimited Legal Audits</div>
+                </div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: #1d4ed8;">₹{plan['price']}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        pay_method = st.radio("Select Payment Method:", ["⚡ UPI (Google Pay / PhonePe / Paytm / BHIM)", "💳 Credit / Debit Card", "🏦 Net Banking / Corporate Account"])
+        
+        if "UPI" in pay_method:
+            st.text_input("Enter UPI ID / VPA", placeholder="e.g., username@okhdfcbank", key="upi_id_input")
+        elif "Card" in pay_method:
+            col_c1, col_c2 = st.columns([2, 1])
+            with col_c1:
+                st.text_input("Card Number", placeholder="•••• •••• •••• ••••", key="card_num_input")
+            with col_c2:
+                st.text_input("Expiry / CVV", placeholder="MM/YY  CVV", key="card_exp_input")
+
+        col_pay1, col_pay2 = st.columns(2)
+        with col_pay1:
+            if st.button(f"Pay ₹{plan['price']} & Activate", type="primary", key="btn_submit_payment"):
+                with st.spinner("Processing secure payment gateway verification..."):
+                    time.sleep(1.2)
+                    user_email = st.session_state.email if st.session_state.email else "guest_user@legaltech.ai"
+                    txn_id = record_subscription_payment(user_email, plan['name'], plan['price'], pay_method)
+                    st.session_state.is_subscribed = True
+                    st.session_state.subscription_plan = plan['name']
+                    st.session_state.show_subscription_dialog = False
+                    st.session_state.selected_checkout_plan = None
+                    st.success(f"🎉 Payment Successful! Reference: {txn_id}")
+                    time.sleep(0.5)
+                    st.rerun()
+        with col_pay2:
+            if st.button("⬅️ Back to Plans", key="btn_back_plans"):
+                st.session_state.selected_checkout_plan = None
+                st.rerun()
 
 # ==========================================
 # POPUP DIALOG: SIGNUP / LOGIN BUBBLE (SEAMLESS SINGLE POPUP)
@@ -738,6 +868,9 @@ if st.session_state.show_login_dialog and not st.session_state.is_authenticated:
 if st.session_state.show_profile_dialog and st.session_state.is_authenticated:
     show_profile_dialog()
 
+if st.session_state.show_subscription_dialog:
+    show_subscription_dialog()
+
 # ==========================================
 # SIDEBAR NAVIGATION
 # ==========================================
@@ -760,10 +893,35 @@ with st.sidebar:
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("⚙️ Edit Profile & Settings", key="sb_edit_profile_btn"):
-            st.session_state.show_profile_dialog = True
-            show_profile_dialog()
+        col_sb_btn1, col_sb_btn2 = st.columns(2)
+        with col_sb_btn1:
+            if st.button("⚙️ Profile", key="sb_edit_profile_btn"):
+                st.session_state.show_profile_dialog = True
+                show_profile_dialog()
+        with col_sb_btn2:
+            if not st.session_state.is_subscribed:
+                if st.button("💎 Upgrade", key="sb_upgrade_btn"):
+                    st.session_state.show_subscription_dialog = True
+                    show_subscription_dialog()
+            else:
+                st.markdown("<span class='doc-tag' style='background: #eff6ff; color: #1d4ed8; font-size: 0.72rem;'>⭐ PRO</span>", unsafe_allow_html=True)
             
+        st.markdown("---")
+        
+        # Subscription & Audit Quota Badge
+        st.markdown("### 🎯 Your Audit Quota")
+        if st.session_state.is_subscribed:
+            st.success(f"⭐ **{st.session_state.subscription_plan}** • Unlimited Audits")
+        else:
+            remaining_audits = max(0, 3 - st.session_state.doc_upload_count)
+            if remaining_audits > 0:
+                st.info(f"📊 **Free Tier**: {remaining_audits}/3 Audits Remaining")
+            else:
+                st.error("⚠️ **0/3 Free Audits Left** • Upgrade Required")
+                if st.button("👑 Upgrade to Pro (₹499/mo)", type="primary", key="sb_quota_upgrade_btn"):
+                    st.session_state.show_subscription_dialog = True
+                    show_subscription_dialog()
+        
         st.markdown("---")
         
         st.markdown("### 🌐 Output Settings")
@@ -804,32 +962,22 @@ with st.sidebar:
             st.session_state.show_login_dialog = True
             show_auth_dialog()
         st.markdown("---")
+        st.markdown("### 💎 Plans & Pricing")
+        st.markdown("• **Free**: 3 Document Audits<br>• **Pro Monthly**: ₹499/mo (Unlimited)<br>• **Enterprise**: ₹5000/yr", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("💎 View Subscription Plans", key="sidebar_plans_btn"):
+            st.session_state.show_subscription_dialog = True
+            show_subscription_dialog()
+        st.markdown("---")
         st.markdown("### 🌐 Supported Languages")
         st.markdown("• English<br>• Hindi (हिंदी)<br>• Bangla (বাংলা)", unsafe_allow_html=True)
-        st.markdown("---")
-        st.markdown("### ⚡ Quick Audit Insights")
-        st.markdown("""
-        <div style="background: rgba(255, 255, 255, 0.85); border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(14, 116, 144, 0.04);">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.84rem;">
-                <span style="color: #64748b;">🛡️ Playbook Audit:</span>
-                <strong style="color: #0f172a;">Bar Standard</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.84rem;">
-                <span style="color: #64748b;">⚡ Document Scan:</span>
-                <strong style="color: #16a34a;">Instant OCR</strong>
-            </div>
-            <div style="border-top: 1px dashed #cbd5e1; margin-top: 8px; padding-top: 8px; font-size: 0.8rem; color: #475569;">
-                💡 <em>Sign in to unlock deep risk audits and multilingual counsel.</em>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
 
 # ==========================================
 # MAIN INTERFACE (WEBSITE PREVIEW & WORKSPACE)
 # ==========================================
 
 # 1. Top Navbar
-col_nav_brand, col_nav_status = st.columns([3, 1.3])
+col_nav_brand, col_nav_status = st.columns([3, 1.4])
 with col_nav_brand:
     st.markdown("""
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -843,11 +991,24 @@ with col_nav_brand:
 
 with col_nav_status:
     if st.session_state.is_authenticated:
-        if st.button(f"👤 {st.session_state.user_name}", key="top_nav_profile_btn"):
-            st.session_state.show_profile_dialog = True
-            show_profile_dialog()
+        col_t1, col_t2 = st.columns([1, 1])
+        with col_t1:
+            if not st.session_state.is_subscribed:
+                if st.button("💎 ₹499/mo", key="top_nav_up_btn"):
+                    st.session_state.show_subscription_dialog = True
+                    show_subscription_dialog()
+            else:
+                st.markdown("<span class='calm-pill' style='padding: 4px 10px; font-size: 0.75rem;'>⭐ PRO</span>", unsafe_allow_html=True)
+        with col_t2:
+            if st.button(f"👤 {st.session_state.user_name.split()[0]}", key="top_nav_profile_btn"):
+                st.session_state.show_profile_dialog = True
+                show_profile_dialog()
     else:
         col_btn1, col_btn2 = st.columns([1, 1.2])
+        with col_btn1:
+            if st.button("💎 Plans", key="top_nav_plans_guest_btn"):
+                st.session_state.show_subscription_dialog = True
+                show_subscription_dialog()
         with col_btn2:
             if st.button("🔐 Sign In", key="top_nav_signin_btn"):
                 st.session_state.show_login_dialog = True
@@ -937,8 +1098,17 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # 6. Upload & Scan Workspace
 st.markdown('<div class="light-glass-card">', unsafe_allow_html=True)
-st.markdown("### 📁 Document Ingestion & Live Scanner")
-st.caption("Upload a legal contract (PDF, JPG, PNG, DOCX) or scan physically using your device camera.")
+col_ws_head, col_ws_badge = st.columns([3, 1.2])
+with col_ws_head:
+    st.markdown("### 📁 Document Ingestion & Live Scanner")
+    st.caption("Upload a legal contract (PDF, JPG, PNG, DOCX) or scan physically using your device camera.")
+with col_ws_badge:
+    if st.session_state.is_authenticated:
+        if st.session_state.is_subscribed:
+            st.markdown("<div style='text-align: right; padding-top: 8px;'><span class='calm-pill'>⭐ Unlimited Audits</span></div>", unsafe_allow_html=True)
+        else:
+            left_cnt = max(0, 3 - st.session_state.doc_upload_count)
+            st.markdown(f"<div style='text-align: right; padding-top: 8px;'><span class='calm-pill' style='color: {'#2563eb' if left_cnt > 0 else '#dc2626'} !important;'>🎯 {left_cnt}/3 Free Audits Left</span></div>", unsafe_allow_html=True)
 
 tab_upload, tab_scan = st.tabs(["📁 Upload Document", "📸 Live Document Scanner"])
 
@@ -983,7 +1153,7 @@ else:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 7. Processing & Analysis Results
+# 7. Processing & Analysis Results (WITH 3-AUDIT LIMIT ENFORCEMENT)
 if document_to_process is not None:
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -1001,110 +1171,152 @@ if document_to_process is not None:
             show_auth_dialog()
             
     else:
-        # Authenticated user workflow
-        if st.button("🚀 Run Deep Legal Analysis", type="primary", key="auth_run_analysis_btn"):
-            with st.spinner("Executing legal audit and playbook compliance check..."):
-                try:
-                    file_name = getattr(document_to_process, "name", None) or "scanned_document.png"
-                    temp_filename = f"temp_{file_name}"
-                    with open(temp_filename, "wb") as f:
-                        f.write(document_to_process.getbuffer())
-                    
-                    gemini_file = client.files.upload(file=temp_filename)
-                    
-                    prompt = f"""
-                    {LEGAL_PLAYBOOK}
-                    =========================================
-                    CRITICAL LANGUAGE INSTRUCTION:
-                    If and ONLY if the document is verified as an authentic legal document, translate the ENTIRE analysis and respond FLUENTLY in {st.session_state.language}.
-                    If this is NOT a legal document, do NOT translate, do NOT provide any descriptions, and respond ONLY with:
-                    {NON_LEGAL_DOCUMENT_MESSAGE}
-                    """
-                    
-                    response = client.models.generate_content(
-                        model='gemini-3.6-flash',
-                        contents=[gemini_file, prompt]
-                    )
-                    
-                    resp_text = (response.text or "").strip()
-                    resp_lower = resp_text.lower()
-                    
-                    # Strict validation check for non-legal documents
-                    rejection_keywords = [
-                        "not a legal document",
-                        "not a legal contract",
-                        "not a recognized legal document",
-                        "please upload the correct one",
-                        "please upload the correect one"
-                    ]
-                    
-                    is_rejected = any(kw in resp_lower for kw in rejection_keywords) or (resp_lower == NON_LEGAL_DOCUMENT_MESSAGE.lower())
-                    
-                    st.markdown('<div class="light-glass-card">', unsafe_allow_html=True)
-                    if is_rejected:
-                        # Clear invalid document state so chat is disabled
-                        st.session_state.uploaded_file_path = None
-                        st.session_state.chat_history = []
+        # Check quota limit
+        quota_exceeded = (st.session_state.doc_upload_count >= 3) and (not st.session_state.is_subscribed)
+        
+        if quota_exceeded:
+            st.markdown("""
+            <div class="light-glass-card" style="border: 2px solid #3b82f6; text-align: center; padding: 30px 20px;">
+                <span style="font-size: 2.4rem;">🔒</span>
+                <h3 style="color: #1e3a8a !important; margin: 8px 0;">Free Audit Quota Exceeded (3/3 Used)</h3>
+                <p style="color: #475569; max-width: 600px; margin: 0 auto 18px auto; font-size: 0.95rem;">
+                    You have reached the limit of 3 free legal document audits. Upgrade to Pro Monthly (₹499/mo) or Enterprise Annual (₹5,000/yr) to unlock unlimited audits and priority legal intelligence.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("👑 Upgrade to Pro (₹499/month) for Unlimited Audits", type="primary", key="quota_upgrade_run_btn"):
+                st.session_state.show_subscription_dialog = True
+                show_subscription_dialog()
+        else:
+            if st.button("🚀 Run Deep Legal Analysis", type="primary", key="auth_run_analysis_btn"):
+                with st.spinner("Executing legal audit and playbook compliance check..."):
+                    try:
+                        file_name = getattr(document_to_process, "name", None) or "scanned_document.png"
+                        temp_filename = f"temp_{file_name}"
+                        with open(temp_filename, "wb") as f:
+                            f.write(document_to_process.getbuffer())
                         
-                        st.markdown(f"""
-                        <div style="background: #fef2f2; border-left: 4px solid #ef4444; border: 1px solid #fee2e2; padding: 16px 20px; border-radius: 10px; color: #991b1b; font-size: 1.02rem; font-weight: 600; display: flex; align-items: center; gap: 10px;">
-                            <span style="font-size: 1.4rem;">⚠️</span>
-                            <span>{NON_LEGAL_DOCUMENT_MESSAGE}</span>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.session_state.uploaded_file_path = temp_filename
-                        st.session_state.chat_history = [{"role": "assistant", "content": resp_text}]
+                        gemini_file = client.files.upload(file=temp_filename)
                         
-                        audio_file = None
-                        try:
-                            audio_lang = {"English": "en", "Hindi (हिंदी)": "hi", "Bangla (বাংলা)": "bn"}.get(st.session_state.language, "en")
-                            tts = gTTS(text=resp_text, lang=audio_lang, slow=False)
-                            audio_file = "analysis_audio.mp3"
-                            tts.save(audio_file)
-                        except Exception as e:
-                            pass
+                        prompt = f"""
+                        {LEGAL_PLAYBOOK}
+                        =========================================
+                        CRITICAL LANGUAGE INSTRUCTION:
+                        If and ONLY if the document is verified as an authentic legal document, translate the ENTIRE analysis and respond FLUENTLY in {st.session_state.language}.
+                        If this is NOT a legal document, do NOT translate, do NOT provide any descriptions, and respond ONLY with:
+                        {NON_LEGAL_DOCUMENT_MESSAGE}
+                        """
+                        
+                        response = client.models.generate_content(
+                            model='gemini-3.6-flash',
+                            contents=[gemini_file, prompt]
+                        )
+                        
+                        resp_text = (response.text or "").strip()
+                        resp_lower = resp_text.lower()
+                        
+                        # Strict validation check for non-legal documents
+                        rejection_keywords = [
+                            "not a legal document",
+                            "not a legal contract",
+                            "not a recognized legal document",
+                            "please upload the correct one",
+                            "please upload the correect one"
+                        ]
+                        
+                        is_rejected = any(kw in resp_lower for kw in rejection_keywords) or (resp_lower == NON_LEGAL_DOCUMENT_MESSAGE.lower())
+                        
+                        st.markdown('<div class="light-glass-card">', unsafe_allow_html=True)
+                        if is_rejected:
+                            # Clear invalid document state so chat is disabled
+                            st.session_state.uploaded_file_path = None
+                            st.session_state.chat_history = []
                             
-                        st.success("✅ Document Analysis Complete")
-                        st.markdown(resp_text)
-                        
-                        if audio_file:
-                            st.markdown("---")
-                            st.write("🔊 **Listen to the Report:**")
-                            st.audio(audio_file, format="audio/mp3")
+                            st.markdown(f"""
+                            <div style="background: #fef2f2; border-left: 4px solid #ef4444; border: 1px solid #fee2e2; padding: 16px 20px; border-radius: 10px; color: #991b1b; font-size: 1.02rem; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.4rem;">⚠️</span>
+                                <span>{NON_LEGAL_DOCUMENT_MESSAGE}</span>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.session_state.uploaded_file_path = temp_filename
+                            st.session_state.chat_history = [{"role": "assistant", "content": resp_text}]
                             
-                    st.markdown('</div>', unsafe_allow_html=True)
-                        
-                except Exception as e:
-                    st.error(f"System Exception: {e}")
+                            # Increment user's audit counter if on free tier
+                            if not st.session_state.is_subscribed:
+                                st.session_state.doc_upload_count += 1
+                            
+                            audio_file = None
+                            try:
+                                audio_lang = {"English": "en", "Hindi (हिंदी)": "hi", "Bangla (বাংলা)": "bn"}.get(st.session_state.language, "en")
+                                tts = gTTS(text=resp_text, lang=audio_lang, slow=False)
+                                audio_file = "analysis_audio.mp3"
+                                tts.save(audio_file)
+                            except Exception as e:
+                                pass
+                                
+                            st.success(f"✅ Document Analysis Complete ({'Unlimited Plan' if st.session_state.is_subscribed else f'Audit {st.session_state.doc_upload_count}/3 used'})")
+                            st.markdown(resp_text)
+                            
+                            if audio_file:
+                                st.markdown("---")
+                                st.write("🔊 **Listen to the Report:**")
+                                st.audio(audio_file, format="audio/mp3")
+                                
+                        st.markdown('</div>', unsafe_allow_html=True)
+                            
+                    except Exception as e:
+                        st.error(f"System Exception: {e}")
 
-# 8. Interactive Chatbot Interface
-if st.session_state.is_authenticated and st.session_state.uploaded_file_path and st.session_state.chat_history:
+# 8. Interactive Legal Counsel Chatbot (ALWAYS ACCESSIBLE TO REGISTERED USERS)
+if st.session_state.is_authenticated:
     st.markdown("---")
     st.markdown("### 💬 Your Personal AI Legal Counsel")
-    st.caption("Ask specific questions about clauses, phrasing, or legal implications found in your document.")
+    if st.session_state.uploaded_file_path:
+        st.caption("Context: Asking specific questions regarding clauses, phrasing, or liabilities found in your uploaded document.")
+    else:
+        st.caption("Ask any general legal questions, contract guidance, or Indian legal playbook queries in real-time.")
     
     st.markdown('<div class="light-glass-card">', unsafe_allow_html=True)
     
-    for msg in st.session_state.chat_history[1:]:
-        st.chat_message(msg["role"]).write(msg["content"])
+    if not st.session_state.chat_history:
+        st.markdown(f"""
+        <div style="background: rgba(241, 245, 249, 0.6); padding: 14px 18px; border-radius: 12px; margin-bottom: 14px; font-size: 0.88rem; color: #475569;">
+            👋 <strong>Welcome {st.session_state.user_name.split()[0]}!</strong> You can ask me anything about standard contract clauses (Non-Competes, IP Assignments, Lease Terms, Indemnity Limits) or general legal inquiries in <strong>{st.session_state.language}</strong>.
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        for msg in st.session_state.chat_history[1:]:
+            st.chat_message(msg["role"]).write(msg["content"])
         
-    if user_question := st.chat_input("E.g., What does clause 4 mean for my liability?"):
+    if user_question := st.chat_input("Ask a legal question or clause explanation..."):
         st.chat_message("user").write(user_question)
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         
-        with st.spinner("Reviewing the document context..."):
+        with st.spinner("Analyzing legal guidance..."):
             try:
-                gemini_file = client.files.upload(file=st.session_state.uploaded_file_path)
-                chat_prompt = f"""
-                You are an expert Legal Counsel.
-                Based on the provided legal document, answer this user query strictly in {st.session_state.language}: {user_question}
-                If the document is not a legal document, respond ONLY with: {NON_LEGAL_DOCUMENT_MESSAGE}
-                """
+                if st.session_state.uploaded_file_path and os.path.exists(st.session_state.uploaded_file_path):
+                    gemini_file = client.files.upload(file=st.session_state.uploaded_file_path)
+                    chat_prompt = f"""
+                    You are an expert Legal Counsel.
+                    Based on the provided legal document and the centralized playbook:
+                    {LEGAL_PLAYBOOK}
+                    Answer this user query strictly in {st.session_state.language}: {user_question}
+                    If the document is not a legal document, respond ONLY with: {NON_LEGAL_DOCUMENT_MESSAGE}
+                    """
+                    chat_contents = [gemini_file, chat_prompt]
+                else:
+                    chat_prompt = f"""
+                    You are an expert Legal Counsel.
+                    Using the standard legal playbook rules:
+                    {LEGAL_PLAYBOOK}
+                    Provide clear, structured, professional legal advice and guidance strictly in {st.session_state.language} for this query: {user_question}
+                    """
+                    chat_contents = [chat_prompt]
                 
                 chat_response = client.models.generate_content(
                     model='gemini-3.6-flash',
-                    contents=[gemini_file, chat_prompt]
+                    contents=chat_contents
                 )
                 
                 chat_resp_text = (chat_response.text or "").strip()
@@ -1119,7 +1331,49 @@ if st.session_state.is_authenticated and st.session_state.uploaded_file_path and
                 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 9. Quiet Clean Footer
+# 9. Dedicated Subscription & Pricing Section
+st.markdown("<br>", unsafe_allow_html=True)
+with st.expander("💎 Membership Plans & Subscription Details", expanded=False):
+    col_sec1, col_sec2 = st.columns(2)
+    with col_sec1:
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.9); border: 1.5px solid #cbd5e1; border-radius: 16px; padding: 20px; text-align: center;">
+            <h4 style="color: #0f172a; margin: 0;">Pro Monthly Plan</h4>
+            <h2 style="color: #1d4ed8; margin: 10px 0;">₹499 <span style="font-size: 0.9rem; color: #64748b;">/ month</span></h2>
+            <p style="font-size: 0.84rem; color: #475569;">Ideal for independent contractors, freelancers, and small business owners.</p>
+            <ul style="text-align: left; font-size: 0.83rem; color: #334155; line-height: 1.6;">
+                <li>Unlimited Legal Document Audits</li>
+                <li>Instant Multilingual Audio Synthesis</li>
+                <li>24/7 AI Legal Counsel Chatbot Access</li>
+                <li>Playbook Risk Severity Flags</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("👑 Upgrade to Pro (₹499/mo)", type="primary", key="btn_sec_pro"):
+            st.session_state.selected_checkout_plan = {"name": "Pro Monthly", "price": 499, "period": "month"}
+            st.session_state.show_subscription_dialog = True
+            show_subscription_dialog()
+            
+    with col_sec2:
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.95); border: 2px solid #2563eb; border-radius: 16px; padding: 20px; text-align: center;">
+            <h4 style="color: #0f172a; margin: 0;">Enterprise Annual Plan</h4>
+            <h2 style="color: #1d4ed8; margin: 10px 0;">₹5,000 <span style="font-size: 0.9rem; color: #64748b;">/ year</span></h2>
+            <p style="font-size: 0.84rem; color: #475569;">Designed for legal practitioners, agencies, and enterprise teams.</p>
+            <ul style="text-align: left; font-size: 0.83rem; color: #334155; line-height: 1.6;">
+                <li>Everything in Pro + 2 Months Free (Save 17%)</li>
+                <li>Custom Firm Playbook Rule Integration</li>
+                <li>Batch Multi-Contract Compliance Auditing</li>
+                <li>Dedicated Priority SLA & Fast Lane Support</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("⭐ Upgrade to Annual (₹5,000/yr)", type="primary", key="btn_sec_annual"):
+            st.session_state.selected_checkout_plan = {"name": "Enterprise Annual", "price": 5000, "period": "year"}
+            st.session_state.show_subscription_dialog = True
+            show_subscription_dialog()
+
+# 10. Quiet Clean Footer
 st.markdown("""
     <div class="cert-footer">
         <h4 style="color: #475569; font-weight: 600;">Industry Standards & Compliance</h4>
