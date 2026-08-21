@@ -528,9 +528,15 @@ def live_timer_ui(seconds_left):
 # SESSION STATE INITIALIZATION
 # ==========================================
 if 'is_authenticated' not in st.session_state: st.session_state.is_authenticated = False
+if 'show_login_dialog' not in st.session_state: st.session_state.show_login_dialog = False
+if 'show_profile_dialog' not in st.session_state: st.session_state.show_profile_dialog = False
 if 'user_name' not in st.session_state: st.session_state.user_name = ""
 if 'email' not in st.session_state: st.session_state.email = ""
+if 'phone_number' not in st.session_state: st.session_state.phone_number = ""
+if 'age' not in st.session_state: st.session_state.age = 24
+if 'profession' not in st.session_state: st.session_state.profession = "Student"
 if 'org_name' not in st.session_state: st.session_state.org_name = ""
+if 'profile_pic_data' not in st.session_state: st.session_state.profile_pic_data = None
 if 'auth_step' not in st.session_state: st.session_state.auth_step = 'request_otp' # 'request_otp', 'verify_otp', 'profile'
 if 'captcha_text' not in st.session_state: st.session_state.captcha_text = generate_captcha_text()
 if 'otp_sent' not in st.session_state: st.session_state.otp_sent = False
@@ -541,23 +547,23 @@ if 'uploaded_file_path' not in st.session_state: st.session_state.uploaded_file_
 if 'language' not in st.session_state: st.session_state.language = "English"
 
 # ==========================================
-# POPUP DIALOG: SIGNUP / LOGIN BUBBLE
+# POPUP DIALOG: SIGNUP / LOGIN BUBBLE (SEAMLESS SINGLE POPUP)
 # ==========================================
-@st.dialog("🔐 Secure Sign In")
+@st.dialog("🔐 Member Sign In & Registration")
 def show_auth_dialog():
     if st.session_state.auth_step == 'request_otp':
-        st.markdown("<h3 style='color: #0f172a !important; margin-bottom: 10px;'>Secure Sign In</h3>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #64748b; font-size: 0.9rem;'>Enter your work or personal email to receive a secure verification code.</p>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color: #0f172a !important; margin-bottom: 6px;'>Secure Sign In</h3>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #64748b; font-size: 0.9rem; margin-bottom: 14px;'>Enter your work or personal email to receive a secure 4-digit verification code.</p>", unsafe_allow_html=True)
         email = st.text_input("Work or Personal Email", placeholder="name@example.com", key="auth_email_input")
         
-        st.write("**Human Verification**")
+        st.markdown("<p style='font-weight: 600; color: #1e293b; margin-top: 10px; margin-bottom: 6px;'>Human Verification</p>", unsafe_allow_html=True)
         col_cap1, col_cap2 = st.columns([2, 1])
         with col_cap1:
-            image = ImageCaptcha(width=280, height=90)
+            image = ImageCaptcha(width=280, height=88)
             st.image(image.generate(st.session_state.captcha_text))
             audio_captcha = generate_audio_captcha(st.session_state.captcha_text)
             if audio_captcha and os.path.exists(audio_captcha):
-                st.write("🔊 Audio Code:")
+                st.caption("🔊 Audio Code:")
                 st.audio(audio_captcha, format='audio/mp3')
         with col_cap2:
             st.write("")
@@ -566,12 +572,14 @@ def show_auth_dialog():
                 st.session_state.captcha_text = generate_captcha_text()
                 st.rerun()
 
-        captcha_input = st.text_input("Enter code from above image/audio", key="auth_captcha_input")
+        captcha_input = st.text_input("Enter code from above image/audio", placeholder="Type CAPTCHA", key="auth_captcha_input")
         
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("Request Access Code", type="primary", key="dialog_send_otp_btn"):
-            if not email or "@" not in email or captcha_input.upper() != st.session_state.captcha_text:
-                st.error("Invalid Email or CAPTCHA mismatch.")
+            if not email or "@" not in email:
+                st.error("Please enter a valid email address.")
+            elif not captcha_input or captcha_input.upper() != st.session_state.captcha_text:
+                st.error("CAPTCHA verification failed. Please try again.")
             else:
                 with st.spinner("Dispatching secure code via 256-bit encryption..."):
                     otp = str(random.randint(1000, 9999))
@@ -581,14 +589,15 @@ def show_auth_dialog():
                         st.session_state.otp_sent = True
                         st.session_state.otp_timestamp = time.time()
                         st.session_state.auth_step = 'verify_otp'
+                        st.session_state.show_login_dialog = True
                         st.rerun()
                     else:
                         st.error("Email delivery failed. Check terminal for SMTP logs.")
 
     elif st.session_state.auth_step == 'verify_otp':
-        st.markdown("<h3 style='color: #0f172a !important;'>Verify Code</h3>", unsafe_allow_html=True)
-        st.success(f"Sent to **{st.session_state.email}**")
-        otp_input = st.text_input("Enter 4-Digit Security Code", type="password", key="auth_otp_input")
+        st.markdown("<h3 style='color: #0f172a !important; margin-bottom: 6px;'>Verify Access Code</h3>", unsafe_allow_html=True)
+        st.success(f"4-Digit code dispatched to **{st.session_state.email}**")
+        otp_input = st.text_input("Enter 4-Digit Security Code", type="password", key="auth_otp_input", max_chars=4)
         
         st.markdown("<br>", unsafe_allow_html=True)
         col_v1, col_v2 = st.columns(2)
@@ -596,13 +605,15 @@ def show_auth_dialog():
             if st.button("Authenticate", type="primary", key="dialog_verify_otp_btn"):
                 if otp_input == st.session_state.real_otp:
                     st.session_state.auth_step = 'profile'
+                    st.session_state.show_login_dialog = True
                     st.rerun()
                 else:
-                    st.error("Invalid Code.")
+                    st.error("Invalid Code. Please verify your inbox.")
         with col_v2:
             if st.button("⬅️ Change Email", key="dialog_back_btn"):
                 st.session_state.auth_step = 'request_otp'
                 st.session_state.captcha_text = generate_captcha_text()
+                st.session_state.show_login_dialog = True
                 st.rerun()
         
         time_remaining = max(0, 60 - int(time.time() - st.session_state.otp_timestamp))
@@ -616,30 +627,143 @@ def show_auth_dialog():
             st.rerun()
 
     elif st.session_state.auth_step == 'profile':
-        st.markdown("<h3 style='color: #0f172a !important;'>Profile Setup</h3>", unsafe_allow_html=True)
-        full_name = st.text_input("Full Legal Name", key="auth_name_input")
-        org_name = st.text_input("Organization (Optional)", key="auth_org_input")
+        st.markdown("<h3 style='color: #0f172a !important; margin-bottom: 4px;'>Complete Your Profile</h3>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #64748b; font-size: 0.88rem; margin-bottom: 12px;'>Enter your legal details to personalize your AI workspace.</p>", unsafe_allow_html=True)
+        
+        full_name = st.text_input("Full Legal Name *", placeholder="e.g., Jane Doe", key="reg_name_input", value=st.session_state.user_name)
+        phone_number = st.text_input("Phone Number *", placeholder="e.g., +91 98765 43210", key="reg_phone_input", value=st.session_state.phone_number)
+        
+        col_prof1, col_prof2 = st.columns(2)
+        with col_prof1:
+            prof_list = ["Student", "Employee", "Legal Professional", "Business Owner / Founder", "Freelancer", "Other"]
+            current_idx = prof_list.index(st.session_state.profession) if st.session_state.profession in prof_list else 0
+            profession = st.selectbox("Profession *", prof_list, index=current_idx, key="reg_prof_input")
+        with col_prof2:
+            age = st.number_input("Age *", min_value=16, max_value=100, value=int(st.session_state.age or 24), key="reg_age_input")
+            
+        org_name = st.text_input("Organization / Institution (Optional)", placeholder="e.g., Acme Legal Services / University", key="reg_org_input", value=st.session_state.org_name)
         
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("Initialize Dashboard", type="primary", key="dialog_complete_auth_btn"):
-            if full_name:
-                st.session_state.user_name = full_name
+        if st.button("Complete Registration & Enter Workspace", type="primary", key="dialog_complete_auth_btn"):
+            if not full_name or not full_name.strip():
+                st.warning("Please enter your Full Legal Name.")
+            elif not phone_number or not phone_number.strip():
+                st.warning("Please enter your Phone Number.")
+            else:
+                st.session_state.user_name = full_name.strip()
+                st.session_state.phone_number = phone_number.strip()
+                st.session_state.profession = profession
+                st.session_state.age = int(age)
                 st.session_state.org_name = (org_name or "").strip()
                 st.session_state.is_authenticated = True
+                st.session_state.show_login_dialog = False
                 st.session_state.auth_step = 'request_otp'
                 st.rerun()
+
+# ==========================================
+# POPUP DIALOG: USER PROFILE & SETTINGS
+# ==========================================
+@st.dialog("👤 User Profile & Settings")
+def show_profile_dialog():
+    st.markdown("<h3 style='color: #0f172a !important; margin-bottom: 12px;'>Profile & Account Management</h3>", unsafe_allow_html=True)
+    
+    col_av1, col_av2 = st.columns([1, 2.5])
+    with col_av1:
+        if st.session_state.profile_pic_data is not None:
+            st.image(st.session_state.profile_pic_data, width=105)
+        else:
+            st.markdown("""
+            <div style="width: 95px; height: 95px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #1d4ed8); display: flex; align-items: center; justify-content: center; font-size: 2.6rem; color: white; margin: 5px auto; box-shadow: 0 4px 14px rgba(37,99,235,0.3);">
+                👤
+            </div>
+            """, unsafe_allow_html=True)
+    with col_av2:
+        new_avatar = st.file_uploader("Upload Profile Picture", type=['png', 'jpg', 'jpeg'], key="avatar_uploader_profile")
+        if new_avatar:
+            st.session_state.profile_pic_data = new_avatar.getvalue()
+            st.success("Avatar updated!")
+            st.rerun()
+
+    st.markdown("---")
+    new_name = st.text_input("Full Legal Name", value=st.session_state.user_name, key="edit_profile_name")
+    st.text_input("Verified Email", value=st.session_state.email, disabled=True)
+    new_phone = st.text_input("Phone Number", value=st.session_state.phone_number, key="edit_profile_phone")
+    
+    col_ep1, col_ep2 = st.columns(2)
+    with col_ep1:
+        prof_options = ["Student", "Employee", "Legal Professional", "Business Owner / Founder", "Freelancer", "Other"]
+        p_idx = prof_options.index(st.session_state.profession) if st.session_state.profession in prof_options else 0
+        new_prof = st.selectbox("Profession", prof_options, index=p_idx, key="edit_profile_prof")
+    with col_ep2:
+        new_age = st.number_input("Age", min_value=16, max_value=100, value=int(st.session_state.age or 24), key="edit_profile_age")
+        
+    new_org = st.text_input("Organization / Institution", value=st.session_state.org_name, key="edit_profile_org")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_pact1, col_pact2 = st.columns(2)
+    with col_pact1:
+        if st.button("💾 Save Changes", type="primary", key="save_profile_modal_btn"):
+            if new_name.strip():
+                st.session_state.user_name = new_name.strip()
+                st.session_state.phone_number = new_phone.strip()
+                st.session_state.profession = new_prof
+                st.session_state.age = int(new_age)
+                st.session_state.org_name = new_org.strip()
+                st.success("Profile saved successfully!")
+                time.sleep(0.4)
+                st.session_state.show_profile_dialog = False
+                st.rerun()
             else:
-                st.warning("Please enter your name to proceed.")
+                st.error("Name cannot be empty.")
+                
+    with col_pact2:
+        if st.button("🚪 Secure Logout", key="profile_modal_logout_btn"):
+            st.session_state.is_authenticated = False
+            st.session_state.user_name = ""
+            st.session_state.email = ""
+            st.session_state.phone_number = ""
+            st.session_state.profile_pic_data = None
+            st.session_state.chat_history = []
+            st.session_state.uploaded_file_path = None
+            st.session_state.show_profile_dialog = False
+            st.session_state.auth_step = 'request_otp'
+            st.rerun()
+
+# ==========================================
+# DIALOG TRIGGERS (MAINTAINS DIALOG ON RERUN)
+# ==========================================
+if st.session_state.show_login_dialog and not st.session_state.is_authenticated:
+    show_auth_dialog()
+
+if st.session_state.show_profile_dialog and st.session_state.is_authenticated:
+    show_profile_dialog()
 
 # ==========================================
 # SIDEBAR NAVIGATION
 # ==========================================
 with st.sidebar:
     if st.session_state.is_authenticated:
-        st.markdown(f"### 👤 {st.session_state.user_name}")
-        st.markdown(f"<p style='color: #64748b; font-size: 0.85rem;'>{st.session_state.email}</p>", unsafe_allow_html=True)
-        if st.session_state.org_name:
-            st.markdown(f"<span class='doc-tag' style='font-size: 0.75rem; padding: 3px 10px;'>🏢 {st.session_state.org_name}</span>", unsafe_allow_html=True)
+        col_sb_av, col_sb_info = st.columns([1, 2.5])
+        with col_sb_av:
+            if st.session_state.profile_pic_data is not None:
+                st.image(st.session_state.profile_pic_data, width=54)
+            else:
+                st.markdown("<div style='font-size: 2rem; padding: 4px;'>👤</div>", unsafe_allow_html=True)
+        with col_sb_info:
+            st.markdown(f"**{st.session_state.user_name}**")
+            st.markdown(f"<span style='color: #64748b; font-size: 0.8rem;'>{st.session_state.email}</span>", unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; margin-bottom: 12px;">
+            <span class="doc-tag" style="font-size: 0.72rem; padding: 2px 8px;">💼 {st.session_state.profession}</span>
+            {f'<span class="doc-tag" style="font-size: 0.72rem; padding: 2px 8px;">🏢 {st.session_state.org_name}</span>' if st.session_state.org_name else ''}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("⚙️ Edit Profile & Settings", key="sb_edit_profile_btn"):
+            st.session_state.show_profile_dialog = True
+            show_profile_dialog()
+            
         st.markdown("---")
         
         st.markdown("### 🌐 Output Settings")
@@ -649,19 +773,27 @@ with st.sidebar:
         )
         
         st.markdown("---")
-        st.markdown("### 🔒 Security Status")
-        st.success("AES-256 Connection Active")
-        st.success("Session Verified & Encrypted")
+        st.markdown("### ⚡ Quick Audit Insights")
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.85); border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(14, 116, 144, 0.04);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.84rem;">
+                <span style="color: #64748b;">🛡️ Playbook Audit:</span>
+                <strong style="color: #0f172a;">4 Core Pillars</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.84rem;">
+                <span style="color: #64748b;">⚡ Verification:</span>
+                <strong style="color: #16a34a;">100% Automated</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.84rem;">
+                <span style="color: #64748b;">🌐 Languages:</span>
+                <strong style="color: #2563eb;">EN • HI • BN</strong>
+            </div>
+            <div style="border-top: 1px dashed #cbd5e1; margin-top: 8px; padding-top: 8px; font-size: 0.8rem; color: #475569;">
+                💡 <em>Pro-Tip: Always verify indemnity caps & bilateral termination notice.</em>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        if st.button("🚪 Secure Logout"):
-            st.session_state.is_authenticated = False
-            st.session_state.user_name = ""
-            st.session_state.email = ""
-            st.session_state.chat_history = []
-            st.session_state.uploaded_file_path = None
-            st.session_state.auth_step = 'request_otp'
-            st.rerun()
     else:
         st.markdown("### ⚖️ LegalTech AI")
         st.markdown("<p style='color: #64748b; font-size: 0.88rem;'>Enterprise Legal Intelligence Platform</p>", unsafe_allow_html=True)
@@ -669,17 +801,35 @@ with st.sidebar:
         st.markdown("<div style='background: #eff6ff; border-left: 3px solid #3b82f6; padding: 12px; border-radius: 8px; font-size: 0.84rem; color: #1e40af;'>👀 <strong>Website Preview Mode:</strong> Explore features and sample workflows. Sign in to upload and analyze files.</div>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🔐 Sign In / Register", type="primary", key="sidebar_signin_btn"):
+            st.session_state.show_login_dialog = True
             show_auth_dialog()
         st.markdown("---")
         st.markdown("### 🌐 Supported Languages")
         st.markdown("• English<br>• Hindi (हिंदी)<br>• Bangla (বাংলা)", unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown("### ⚡ Quick Audit Insights")
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.85); border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(14, 116, 144, 0.04);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.84rem;">
+                <span style="color: #64748b;">🛡️ Playbook Audit:</span>
+                <strong style="color: #0f172a;">Bar Standard</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.84rem;">
+                <span style="color: #64748b;">⚡ Document Scan:</span>
+                <strong style="color: #16a34a;">Instant OCR</strong>
+            </div>
+            <div style="border-top: 1px dashed #cbd5e1; margin-top: 8px; padding-top: 8px; font-size: 0.8rem; color: #475569;">
+                💡 <em>Sign in to unlock deep risk audits and multilingual counsel.</em>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ==========================================
 # MAIN INTERFACE (WEBSITE PREVIEW & WORKSPACE)
 # ==========================================
 
 # 1. Top Navbar
-col_nav_brand, col_nav_status = st.columns([3, 1.2])
+col_nav_brand, col_nav_status = st.columns([3, 1.3])
 with col_nav_brand:
     st.markdown("""
         <div style="display: flex; align-items: center; gap: 12px;">
@@ -693,24 +843,23 @@ with col_nav_brand:
 
 with col_nav_status:
     if st.session_state.is_authenticated:
-        st.markdown(f"""
-            <div style="text-align: right; padding-top: 5px;">
-                <span class="calm-pill">👤 {st.session_state.user_name}</span>
-            </div>
-        """, unsafe_allow_html=True)
+        if st.button(f"👤 {st.session_state.user_name}", key="top_nav_profile_btn"):
+            st.session_state.show_profile_dialog = True
+            show_profile_dialog()
     else:
         col_btn1, col_btn2 = st.columns([1, 1.2])
         with col_btn2:
             if st.button("🔐 Sign In", key="top_nav_signin_btn"):
+                st.session_state.show_login_dialog = True
                 show_auth_dialog()
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 2. Hero Banner & Calm Badges
+# 2. Hero Banner & Calm Badges (AI MODEL NAME REMOVED)
 st.markdown("""
 <div class="light-glass-card" style="text-align: center; padding: 36px 26px;">
     <div style="margin-bottom: 12px;">
-        <span class="calm-pill">AI Engine Active • Gemini 3.6 Flash</span>
+        <span class="calm-pill">✨ Autonomous Legal Intelligence Suite</span>
     </div>
     <h1 style="font-size: 2.6rem; margin-bottom: 10px;" class="brand-title">
         Enterprise Legal Document Intelligence
@@ -805,6 +954,7 @@ if not st.session_state.is_authenticated:
         </div>
         """, unsafe_allow_html=True)
         if st.button("📤 Upload Document", type="primary", key="guest_upload_doc_btn"):
+            st.session_state.show_login_dialog = True
             show_auth_dialog()
 
     with tab_scan:
@@ -816,6 +966,7 @@ if not st.session_state.is_authenticated:
         </div>
         """, unsafe_allow_html=True)
         if st.button("📸 Capture / Scan Document", type="primary", key="guest_scan_doc_btn"):
+            st.session_state.show_login_dialog = True
             show_auth_dialog()
 
 else:
@@ -846,6 +997,7 @@ if document_to_process is not None:
         """, unsafe_allow_html=True)
         
         if st.button("Sign In to Run Deep Legal Analysis", type="primary", key="guest_trigger_analysis_btn"):
+            st.session_state.show_login_dialog = True
             show_auth_dialog()
             
     else:
