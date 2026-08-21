@@ -18,6 +18,7 @@ venv.bak/
 # Temporary upload files
 temp_*
 *.tmp
+*.log
 
 # Generated Audio Files
 *.mp3
