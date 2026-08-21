@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 export const getToken = () => localStorage.getItem("legaltech_token");
 export const setToken = (token) => localStorage.setItem("legaltech_token", token);
