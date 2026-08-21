@@ -860,15 +860,13 @@ def show_profile_dialog():
             st.rerun()
 
 # ==========================================
-# DIALOG TRIGGERS (MAINTAINS DIALOG ON RERUN)
+# DIALOG TRIGGERS (CENTRALIZED MODAL CONTROLLER)
 # ==========================================
-if st.session_state.show_login_dialog and not st.session_state.is_authenticated:
+if not st.session_state.is_authenticated and st.session_state.show_login_dialog:
     show_auth_dialog()
-
-if st.session_state.show_profile_dialog and st.session_state.is_authenticated:
+elif st.session_state.is_authenticated and st.session_state.show_profile_dialog:
     show_profile_dialog()
-
-if st.session_state.show_subscription_dialog:
+elif st.session_state.show_subscription_dialog:
     show_subscription_dialog()
 
 # ==========================================
@@ -897,12 +895,14 @@ with st.sidebar:
         with col_sb_btn1:
             if st.button("⚙️ Profile", key="sb_edit_profile_btn"):
                 st.session_state.show_profile_dialog = True
-                show_profile_dialog()
+                st.session_state.show_subscription_dialog = False
+                st.rerun()
         with col_sb_btn2:
             if not st.session_state.is_subscribed:
                 if st.button("💎 Upgrade", key="sb_upgrade_btn"):
                     st.session_state.show_subscription_dialog = True
-                    show_subscription_dialog()
+                    st.session_state.show_profile_dialog = False
+                    st.rerun()
             else:
                 st.markdown("<span class='doc-tag' style='background: #eff6ff; color: #1d4ed8; font-size: 0.72rem;'>⭐ PRO</span>", unsafe_allow_html=True)
             
@@ -920,7 +920,7 @@ with st.sidebar:
                 st.error("⚠️ **0/3 Free Audits Left** • Upgrade Required")
                 if st.button("👑 Upgrade to Pro (₹499/mo)", type="primary", key="sb_quota_upgrade_btn"):
                     st.session_state.show_subscription_dialog = True
-                    show_subscription_dialog()
+                    st.rerun()
         
         st.markdown("---")
         
@@ -960,14 +960,14 @@ with st.sidebar:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🔐 Sign In / Register", type="primary", key="sidebar_signin_btn"):
             st.session_state.show_login_dialog = True
-            show_auth_dialog()
+            st.rerun()
         st.markdown("---")
         st.markdown("### 💎 Plans & Pricing")
         st.markdown("• **Free**: 3 Document Audits<br>• **Pro Monthly**: ₹499/mo (Unlimited)<br>• **Enterprise**: ₹5000/yr", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("💎 View Subscription Plans", key="sidebar_plans_btn"):
             st.session_state.show_subscription_dialog = True
-            show_subscription_dialog()
+            st.rerun()
         st.markdown("---")
         st.markdown("### 🌐 Supported Languages")
         st.markdown("• English<br>• Hindi (हिंदी)<br>• Bangla (বাংলা)", unsafe_allow_html=True)
@@ -996,23 +996,23 @@ with col_nav_status:
             if not st.session_state.is_subscribed:
                 if st.button("💎 ₹499/mo", key="top_nav_up_btn"):
                     st.session_state.show_subscription_dialog = True
-                    show_subscription_dialog()
+                    st.rerun()
             else:
                 st.markdown("<span class='calm-pill' style='padding: 4px 10px; font-size: 0.75rem;'>⭐ PRO</span>", unsafe_allow_html=True)
         with col_t2:
             if st.button(f"👤 {st.session_state.user_name.split()[0]}", key="top_nav_profile_btn"):
                 st.session_state.show_profile_dialog = True
-                show_profile_dialog()
+                st.rerun()
     else:
         col_btn1, col_btn2 = st.columns([1, 1.2])
         with col_btn1:
             if st.button("💎 Plans", key="top_nav_plans_guest_btn"):
                 st.session_state.show_subscription_dialog = True
-                show_subscription_dialog()
+                st.rerun()
         with col_btn2:
             if st.button("🔐 Sign In", key="top_nav_signin_btn"):
                 st.session_state.show_login_dialog = True
-                show_auth_dialog()
+                st.rerun()
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -1125,7 +1125,7 @@ if not st.session_state.is_authenticated:
         """, unsafe_allow_html=True)
         if st.button("📤 Upload Document", type="primary", key="guest_upload_doc_btn"):
             st.session_state.show_login_dialog = True
-            show_auth_dialog()
+            st.rerun()
 
     with tab_scan:
         st.markdown("""
@@ -1137,7 +1137,7 @@ if not st.session_state.is_authenticated:
         """, unsafe_allow_html=True)
         if st.button("📸 Capture / Scan Document", type="primary", key="guest_scan_doc_btn"):
             st.session_state.show_login_dialog = True
-            show_auth_dialog()
+            st.rerun()
 
 else:
     with tab_upload:
@@ -1168,7 +1168,7 @@ if document_to_process is not None:
         
         if st.button("Sign In to Run Deep Legal Analysis", type="primary", key="guest_trigger_analysis_btn"):
             st.session_state.show_login_dialog = True
-            show_auth_dialog()
+            st.rerun()
             
     else:
         # Check quota limit
@@ -1186,7 +1186,7 @@ if document_to_process is not None:
             """, unsafe_allow_html=True)
             if st.button("👑 Upgrade to Pro (₹499/month) for Unlimited Audits", type="primary", key="quota_upgrade_run_btn"):
                 st.session_state.show_subscription_dialog = True
-                show_subscription_dialog()
+                st.rerun()
         else:
             if st.button("🚀 Run Deep Legal Analysis", type="primary", key="auth_run_analysis_btn"):
                 with st.spinner("Executing legal audit and playbook compliance check..."):
@@ -1254,7 +1254,7 @@ if document_to_process is not None:
                                 tts.save(audio_file)
                             except Exception as e:
                                 pass
-                                
+                            
                             st.success(f"✅ Document Analysis Complete ({'Unlimited Plan' if st.session_state.is_subscribed else f'Audit {st.session_state.doc_upload_count}/3 used'})")
                             st.markdown(resp_text)
                             
@@ -1352,7 +1352,7 @@ with st.expander("💎 Membership Plans & Subscription Details", expanded=False)
         if st.button("👑 Upgrade to Pro (₹499/mo)", type="primary", key="btn_sec_pro"):
             st.session_state.selected_checkout_plan = {"name": "Pro Monthly", "price": 499, "period": "month"}
             st.session_state.show_subscription_dialog = True
-            show_subscription_dialog()
+            st.rerun()
             
     with col_sec2:
         st.markdown("""
@@ -1371,7 +1371,7 @@ with st.expander("💎 Membership Plans & Subscription Details", expanded=False)
         if st.button("⭐ Upgrade to Annual (₹5,000/yr)", type="primary", key="btn_sec_annual"):
             st.session_state.selected_checkout_plan = {"name": "Enterprise Annual", "price": 5000, "period": "year"}
             st.session_state.show_subscription_dialog = True
-            show_subscription_dialog()
+            st.rerun()
 
 # 10. Quiet Clean Footer
 st.markdown("""
