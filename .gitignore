@@ -1,0 +1,34 @@
+﻿# Environment & Secrets (CRITICAL)
+.env
+*.env
+.env.local
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Temporary upload files
+temp_*
+*.tmp
+
+# Generated Audio Files
+*.mp3
+captcha_audio.mp3
+analysis_audio.mp3
+
+# Streamlit & IDE configs
+.streamlit/secrets.toml
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
