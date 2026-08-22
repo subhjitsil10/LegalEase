@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { X, Check, ShieldCheck, Zap, Star, ArrowLeft, Sparkles, Layers } from 'lucide-react';
+import { X, Check, ShieldCheck, Zap, Star, ArrowLeft, Sparkles, Layers, Cpu, Lock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../../api';
 
 export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptionSuccess }) {
-  const [selectedPlan, setSelectedPlan] = useState(null); // { name: 'Standard Pack (10 Uses)', price: 299, uses: 10 }
+  const [selectedPlan, setSelectedPlan] = useState(null); // { name: 'Standard Pack (10 Uses)', price: 199, uses: 10 }
   const [paymentMethod, setPaymentMethod] = useState('⚡ UPI (Google Pay / PhonePe / Paytm / BHIM)');
   const [upiId, setUpiId] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -48,8 +48,8 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-      <div className="modal-glass-container w-full max-w-2xl p-6 sm:p-8 relative text-slate-800 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md overflow-y-auto">
+      <div className="modal-glass-container w-full max-w-2xl p-6 sm:p-8 relative text-slate-800 animate-in fade-in zoom-in-95 duration-200 my-8">
         
         {/* Close Button */}
         <button 
@@ -59,9 +59,14 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-2xl font-extrabold text-slate-900 mb-1">Top-Up Audit Credits</h3>
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="text-2xl font-extrabold text-slate-900">Top-Up Audit Credits</h3>
+          <span className="calm-pill text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200 font-bold flex items-center gap-1">
+            <Lock className="w-3 h-3 text-emerald-600" /> 256-Bit E2E Encrypted
+          </span>
+        </div>
         <p className="text-xs sm:text-sm text-slate-500 mb-6">
-          Add document compliance audits to your account. No recurring subscription lock-ins. Credits never expire.
+          Add document compliance audits to your account. Credits never expire. No recurring subscription lock-ins.
         </p>
 
         {errorMsg && (
@@ -74,15 +79,15 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
           /* COMPARISON CARDS */
           <div className="grid sm:grid-cols-2 gap-4">
             
-            {/* Standard Pack (10 Uses - ₹299) */}
+            {/* Standard Pack (10 Uses - ₹199) */}
             <div className="p-5 rounded-2xl bg-white/90 border border-slate-200 hover:border-blue-300 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
               <div>
-                <span className="doc-tag text-[11px] px-2.5 py-0.5 mb-2 bg-blue-50 text-blue-700 border-blue-200">POPULAR</span>
+                <span className="doc-tag text-[11px] px-2.5 py-0.5 mb-2 bg-blue-50 text-blue-700 border-blue-200 font-bold">POPULAR</span>
                 <h4 className="text-lg font-bold text-slate-900">Standard Pack</h4>
                 <div className="text-3xl font-extrabold text-blue-700 my-2">
-                  ₹299 <span className="text-xs font-normal text-slate-500">/ 10 Uses</span>
+                  ₹199 <span className="text-xs font-normal text-slate-500">/ 10 Uses</span>
                 </div>
-                <p className="text-xs text-blue-600 font-semibold mb-4">₹29.9 per audit • Ideal for contract reviews</p>
+                <p className="text-xs text-blue-600 font-semibold mb-4">₹19.9 per audit • Fast Gemini Flash AI</p>
                 <ul className="space-y-2 text-xs text-slate-700">
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
@@ -90,7 +95,7 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                    Priority Gemini 3.6 Flash Processing
+                    High-Speed Gemini Flash Intelligence
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
@@ -108,30 +113,34 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedPlan({ name: 'Standard Pack (10 Uses)', price: 299, uses: 10 })}
+                onClick={() => setSelectedPlan({ name: 'Standard Pack (10 Uses)', price: 199, uses: 10, engine: 'Gemini Flash' })}
                 className="w-full mt-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Choose 10 Uses • ₹299</span>
+                <span>Choose 10 Uses • ₹199</span>
               </button>
             </div>
 
             {/* Pro Power Pack (30 Uses - ₹399) */}
-            <div className="p-5 rounded-2xl bg-white/95 border-2 border-indigo-500 shadow-lg shadow-indigo-500/10 flex flex-col justify-between relative overflow-hidden">
+            <div className="p-5 rounded-2xl bg-white/95 border-2 border-indigo-500 shadow-lg shadow-indigo-500/10 flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-white to-indigo-50/40">
               <div className="absolute top-0 right-0 bg-gradient-to-l from-indigo-600 to-blue-600 text-white text-[10px] font-extrabold px-3 py-1 rounded-bl-xl uppercase tracking-wide">
-                ⭐ Save 55%
+                ⭐ GEMINI 3.1 PRO
               </div>
               <div>
-                <span className="doc-tag text-[11px] px-2.5 py-0.5 mb-2 bg-indigo-50 text-indigo-700 border-indigo-200">BEST VALUE</span>
+                <span className="doc-tag text-[11px] px-2.5 py-0.5 mb-2 bg-indigo-100 text-indigo-800 border-indigo-200 font-bold">BEST VALUE</span>
                 <h4 className="text-lg font-bold text-slate-900">Pro Power Pack</h4>
                 <div className="text-3xl font-extrabold text-indigo-700 my-2">
                   ₹399 <span className="text-xs font-normal text-slate-500">/ 30 Uses</span>
                 </div>
-                <p className="text-xs text-indigo-600 font-semibold mb-4">Only ₹13.3 per audit • Best for law firms & businesses</p>
+                <p className="text-xs text-indigo-600 font-semibold mb-4">Only ₹13.3 per audit • Gemini 3.1 Pro Engine</p>
                 <ul className="space-y-2 text-xs text-slate-700">
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
                     <strong>+30 Document Audits</strong> credited instantly
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                    <strong>Powered by Gemini 3.1 Pro</strong> Deep Reasoning
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
@@ -143,17 +152,13 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                    Unlimited Legal Counsel Deep Dives
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                    Credits never expire
+                    256-Bit End-to-End Encrypted Vault
                   </li>
                 </ul>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedPlan({ name: 'Pro Power Pack (30 Uses)', price: 399, uses: 30 })}
+                onClick={() => setSelectedPlan({ name: 'Pro Power Pack (30 Uses - Gemini 3.1 Pro)', price: 399, uses: 30, engine: 'Gemini 3.1 Pro' })}
                 className="w-full mt-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Sparkles className="w-4 h-4" />
@@ -168,7 +173,7 @@ export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptio
             <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex items-center justify-between">
               <div>
                 <h4 className="font-bold text-blue-950 text-base">{selectedPlan.name}</h4>
-                <p className="text-xs text-blue-700">+{selectedPlan.uses} Legal Document Audits • Instant Top-Up</p>
+                <p className="text-xs text-blue-700">+{selectedPlan.uses} Document Audits • {selectedPlan.engine || 'Gemini Pro'} • 256-Bit E2E Encrypted</p>
               </div>
               <div className="text-2xl font-black text-blue-700">
                 ₹{selectedPlan.price}

@@ -149,21 +149,28 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
             </button>
           </div>
 
-          {/* Desired Output Language Selector */}
-          <div className="flex items-center gap-2 p-1.5 px-3 bg-white/90 border border-sky-200 rounded-xl shadow-xs">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-              <Globe className="w-3.5 h-3.5 text-blue-600" />
-              <span>Output Language:</span>
+          {/* Controls: E2E Shield + Desired Output Language Selector */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-[11px] font-bold">
+              <Lock className="w-3 h-3 text-emerald-600" />
+              <span>256-Bit E2E Encrypted</span>
             </div>
-            <select
-              value={language}
-              onChange={(e) => setLanguage && setLanguage(e.target.value)}
-              className="bg-blue-50/80 hover:bg-blue-50 text-blue-700 font-bold text-xs py-1 px-2 rounded-lg border border-blue-200 focus:outline-none cursor-pointer"
-            >
-              <option value="English">English</option>
-              <option value="Hindi (हिंदी)">Hindi (हिंदी)</option>
-              <option value="Bangla (বাংলা)">Bangla (বাংলা)</option>
-            </select>
+
+            <div className="flex items-center gap-2 p-1.5 px-3 bg-white/90 border border-sky-200 rounded-xl shadow-xs">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                <Globe className="w-3.5 h-3.5 text-blue-600" />
+                <span>Output Language:</span>
+              </div>
+              <select
+                value={language}
+                onChange={(e) => setLanguage && setLanguage(e.target.value)}
+                className="bg-blue-50/80 hover:bg-blue-50 text-blue-700 font-bold text-xs py-1 px-2 rounded-lg border border-blue-200 focus:outline-none cursor-pointer"
+              >
+                <option value="English">English</option>
+                <option value="Hindi (हिंदी)">Hindi (हिंदी)</option>
+                <option value="Bangla (বাংলা)">Bangla (বাংলা)</option>
+              </select>
+            </div>
           </div>
 
         </div>

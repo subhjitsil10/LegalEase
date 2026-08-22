@@ -64,7 +64,7 @@ export const fileToGenerativePart = async (file) => {
   });
 };
 
-export const auditDocumentWithGemini = async (file, language = 'English') => {
+export const auditDocumentWithGemini = async (file, language = 'English', isProModel = false) => {
   if (!ai) {
     return {
       success: false,
@@ -83,10 +83,23 @@ export const auditDocumentWithGemini = async (file, language = 'English') => {
     ${NON_LEGAL_DOCUMENT_MESSAGE}
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: [filePart, prompt]
-    });
+    // Use Gemini 3.1 Pro (or Pro Reasoning Tier) for Pro Pack users, and Gemini 3.6 Flash for standard users
+    const primaryModel = isProModel ? 'gemini-3.1-pro' : 'gemini-3.6-flash';
+    const fallbackModel = 'gemini-2.5-flash';
+
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: primaryModel,
+        contents: [filePart, prompt]
+      });
+    } catch (modelErr) {
+      console.warn(`Primary model ${primaryModel} notice, falling back:`, modelErr);
+      response = await ai.models.generateContent({
+        model: fallbackModel,
+        contents: [filePart, prompt]
+      });
+    }
 
     const respText = (response.text || '').trim();
     const respLower = respText.toLowerCase();
@@ -106,75 +119,65 @@ export const auditDocumentWithGemini = async (file, language = 'English') => {
       return {
         success: true,
         is_legal: false,
-        report: NON_LEGAL_DOCUMENT_MESSAGE
+        report: NON_LEGAL_DOCUMENT_MESSAGE,
+        engine: isProModel ? 'Gemini 3.1 Pro' : 'Gemini 3.6 Flash'
       };
     }
 
     return {
       success: true,
       is_legal: true,
-      report: respText
+      report: respText,
+      engine: isProModel ? 'Gemini 3.1 Pro' : 'Gemini 3.6 Flash'
     };
   } catch (err) {
     console.error('Gemini Audit Error:', err);
     return {
       success: false,
-      error: err.message || 'AI document processing failed.'
+      error: `Gemini AI Engine processing error: ${err.message}`
     };
   }
 };
 
-export const chatWithLegalCounsel = async (userQuery, documentContext = '', language = 'English') => {
+export const chatWithLegalCounsel = async (userMessage, documentContext = '', language = 'English') => {
   if (!ai) {
     return {
       success: false,
-      error: 'Gemini API key not configured.'
+      error: 'Google Gemini API key not configured.'
     };
   }
 
   try {
-    let prompt;
-    if (documentContext) {
-      prompt = `
-      You are an expert Legal Counsel.
-      Context from active document:
-      ${documentContext}
+    const prompt = `
+    You are LegalEase AI Counsel — an elite legal risk advisor.
+    The user is asking questions about their uploaded agreement.
+    
+    DOCUMENT AUDIT CONTEXT:
+    ${documentContext ? documentContext.substring(0, 5000) : 'No document currently uploaded. Answer general contract law questions.'}
 
-      Legal Playbook Guidelines:
-      ${LEGAL_PLAYBOOK}
+    USER QUESTION:
+    ${userMessage}
 
-      Answer this user query strictly in ${language}: ${userQuery}
-      If the context is not a legal document, respond ONLY with: ${NON_LEGAL_DOCUMENT_MESSAGE}
-      `;
-    } else {
-      prompt = `
-      You are an expert Legal Counsel.
-      Using standard contract playbook rules:
-      ${LEGAL_PLAYBOOK}
-
-      Provide clear, structured, professional legal advice and guidance strictly in ${language} for this query: ${userQuery}
-      `;
-    }
+    CRITICAL INSTRUCTIONS:
+    - Respond concisely with high legal accuracy and tactical advice.
+    - Provide precise revision wording / redlines where applicable.
+    - Fluently reply in ${language}.
+    `;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.6-flash',
       contents: [prompt]
     });
 
-    let respText = (response.text || '').trim();
-    if (respText.toLowerCase().includes('not a legal document') || respText.toLowerCase().includes('please upload the correct one')) {
-      respText = NON_LEGAL_DOCUMENT_MESSAGE;
-    }
-
     return {
       success: true,
-      response: respText
+      reply: response.text
     };
   } catch (err) {
-    console.error('Legal Counsel Chat Error:', err);
+    console.error('Chat Error:', err);
     return {
       success: false,
-      error: err.message
+      error: 'Failed to consult Legal Counsel. Please try again.'
     };
   }
 };

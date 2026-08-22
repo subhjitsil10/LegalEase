@@ -198,7 +198,7 @@ export const api = {
     });
   },
 
-  // Document Analysis: Direct with Gemini 3.6 Flash
+  // Document Analysis: Direct with Gemini 3.6 Flash / Gemini 3.1 Pro
   analyzeDocument: async (file, language = 'English') => {
     const currentUser = localStore.getUser();
     const currentLimit = currentUser?.audit_limit || 3;
@@ -209,11 +209,12 @@ export const api = {
       return {
         success: false,
         quota_exceeded: true,
-        error: `You have utilized all ${currentLimit} available document audits (${currentUsage}/${currentLimit} used). Upgrade to the Standard Pack (₹299 for 10 Audits) or Pro Power Pack (₹399 for 30 Audits) to continue auditing documents.`
+        error: `You have utilized all ${currentLimit} available document audits (${currentUsage}/${currentLimit} used). Upgrade with the Standard Pack (₹199 for 10 Audits) or Pro Power Pack (₹399 for 30 Audits with Gemini 3.1 Pro) to continue auditing documents.`
       };
     }
 
-    const res = await auditDocumentWithGemini(file, language);
+    const isProUser = currentUser?.subscription_plan?.includes('399') || currentUser?.subscription_plan?.includes('30') || currentUser?.subscription_plan?.includes('Pro');
+    const res = await auditDocumentWithGemini(file, language, isProUser);
 
     if (res.success && res.is_legal && currentUser) {
       const updatedUser = localStore.incrementAuditCount(currentUser);
@@ -251,9 +252,9 @@ export const api = {
 
     // Determine additional audits based on selected pack
     let additionalAudits = 10;
-    if (amountInr === 399 || planName.includes('30')) {
+    if (amountInr === 399 || planName.includes('30') || planName.includes('3.1')) {
       additionalAudits = 30;
-    } else if (amountInr === 299 || planName.includes('10')) {
+    } else if (amountInr === 199 || planName.includes('10')) {
       additionalAudits = 10;
     }
 
