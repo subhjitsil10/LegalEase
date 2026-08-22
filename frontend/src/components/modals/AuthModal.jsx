@@ -21,6 +21,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [activeDispatchedCode, setActiveDispatchedCode] = useState('');
+  const [deliveryNotice, setDeliveryNotice] = useState('');
 
   const generateNewCaptcha = () => {
     const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -115,9 +117,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   }, [step, timeLeft]);
 
   if (!isOpen) return null;
-
-  const [activeDispatchedCode, setActiveDispatchedCode] = useState('');
-  const [deliveryNotice, setDeliveryNotice] = useState('');
 
   const handleRequestOtp = async (e) => {
     e.preventDefault();
