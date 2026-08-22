@@ -328,35 +328,33 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               </div>
             </div>
 
-            {/* Prominent Instant Access Code Card */}
-            <div className="p-3.5 my-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl text-center shadow-xs">
-              <p className="text-xs text-slate-600">Verification dispatched to <span className="font-semibold text-slate-800">{email}</span></p>
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <span className="text-xs text-slate-500 font-semibold">Access Code:</span>
-                <span className="font-mono text-base font-black tracking-widest text-blue-700 bg-white px-3 py-1 rounded-xl border border-blue-200 shadow-xs">
-                  {activeDispatchedCode || '1234'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setOtpCode(activeDispatchedCode || '1234')}
-                  className="text-xs font-bold text-blue-600 hover:text-blue-800 underline ml-1 cursor-pointer"
-                >
-                  ⚡ Auto-Fill
-                </button>
-              </div>
+            {/* Security Verification Notice */}
+            <div className="p-3.5 my-3 bg-blue-50 border border-blue-200 rounded-2xl text-center shadow-xs">
+              <p className="text-xs font-semibold text-slate-700">
+                A secure verification code has been dispatched to:
+              </p>
+              <p className="text-sm font-bold text-blue-700 mt-0.5">{email}</p>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Please check your email inbox and Spam folder to enter the code.
+              </p>
             </div>
+
+            {error && (
+              <div className="p-3 my-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
+                ⚠️ {error}
+              </div>
+            )}
 
             <form onSubmit={handleVerifyOtp} className="space-y-4 my-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Enter 4-Digit Security Code</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Enter Verification Code</label>
                 <input
-                  type="password"
-                  maxLength={4}
+                  type="text"
                   required
-                  placeholder="••••"
+                  placeholder="Enter code from email"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
-                  className="w-full tracking-widest text-center text-2xl font-bold py-2.5 bg-white border border-sky-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full tracking-widest text-center text-xl font-bold py-2.5 bg-white border border-sky-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
                 />
               </div>
 
@@ -364,9 +362,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all"
+                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
                 >
-                  {loading ? 'Authenticating...' : 'Authenticate'}
+                  {loading ? 'Verifying Code...' : 'Authenticate & Sign In'}
                 </button>
                 <button
                   type="button"
