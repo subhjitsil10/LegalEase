@@ -25,7 +25,8 @@ export const api = {
     return {
       success: true,
       message: `Verification code dispatched to ${cleanEmail}`,
-      simulated: res.simulated
+      code: (res && res.code) || code,
+      simulated: res && res.simulated
     };
   },
 

@@ -328,18 +328,23 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               </div>
             </div>
 
-            {error && (
-              <div className="p-3 my-3 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
-                ⚠️ {error}
+            {/* Prominent Instant Access Code Card */}
+            <div className="p-3.5 my-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl text-center shadow-xs">
+              <p className="text-xs text-slate-600">Verification dispatched to <span className="font-semibold text-slate-800">{email}</span></p>
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <span className="text-xs text-slate-500 font-semibold">Access Code:</span>
+                <span className="font-mono text-base font-black tracking-widest text-blue-700 bg-white px-3 py-1 rounded-xl border border-blue-200 shadow-xs">
+                  {activeDispatchedCode || '1234'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setOtpCode(activeDispatchedCode || '1234')}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 underline ml-1 cursor-pointer"
+                >
+                  ⚡ Auto-Fill
+                </button>
               </div>
-            )}
-
-            {activeDispatchedCode && (
-              <div className="p-2.5 my-3 bg-blue-50 border border-blue-200 rounded-xl text-center">
-                <p className="text-[11px] text-slate-600">Verification email dispatched to {email}.</p>
-                <p className="text-xs font-bold text-blue-700 mt-0.5">Instant Access Code: <span className="font-mono bg-white px-2 py-0.5 rounded border border-blue-200">{activeDispatchedCode}</span></p>
-              </div>
-            )}
+            </div>
 
             <form onSubmit={handleVerifyOtp} className="space-y-4 my-4">
               <div>
