@@ -3,7 +3,10 @@ import os
 import json
 import time
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "legaltech.db")
+if os.environ.get("VERCEL"):
+    DB_PATH = "/tmp/legaltech.db"
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "legaltech.db")
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)

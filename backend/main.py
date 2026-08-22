@@ -37,9 +37,16 @@ app.add_middleware(
 )
 
 # Uploads static directory for user profile avatars
-UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+if os.environ.get("VERCEL"):
+    UPLOADS_DIR = "/tmp/uploads"
+else:
+    UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+
+@app.get("/")
+def root_status():
+    return {"status": "online", "name": "LegalEase API", "version": "2.0.0"}
 
 # Dependency to extract and verify authenticated user
 def get_current_user(authorization: Optional[str] = Header(None)):
