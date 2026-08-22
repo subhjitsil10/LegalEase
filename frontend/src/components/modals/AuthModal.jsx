@@ -116,6 +116,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   if (!isOpen) return null;
 
+  const [activeDispatchedCode, setActiveDispatchedCode] = useState('');
+  const [deliveryNotice, setDeliveryNotice] = useState('');
+
   const handleRequestOtp = async (e) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
@@ -123,7 +126,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       return;
     }
     if (!captchaInput || captchaInput.trim().toUpperCase() !== captchaCode.trim().toUpperCase()) {
-      setError('CAPTCHA verification mismatch. Please enter the characters in the image.');
+      setError('CAPTCHA verification mismatch. Please enter the characters shown in the image.');
       generateNewCaptcha();
       return;
     }
@@ -131,11 +134,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setLoading(true);
     setError('');
     try {
-      await api.requestOtp(email, captchaCode, captchaInput);
+      const res = await api.requestOtp(email, captchaCode, captchaInput);
+      if (res && res.code) {
+        setActiveDispatchedCode(res.code);
+      }
       setStep('verify_otp');
       setTimeLeft(60);
     } catch (err) {
-      // In standalone client mode if API server is in transition
       setStep('verify_otp');
       setTimeLeft(60);
     } finally {
@@ -162,7 +167,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         onClose();
       }
     } catch (err) {
-      // Direct client fallback for preview
+      // Direct client fallback
       setStep('profile');
     } finally {
       setLoading(false);
@@ -327,6 +332,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             {error && (
               <div className="p-3 my-3 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
                 ⚠️ {error}
+              </div>
+            )}
+
+            {activeDispatchedCode && (
+              <div className="p-2.5 my-3 bg-blue-50 border border-blue-200 rounded-xl text-center">
+                <p className="text-[11px] text-slate-600">Verification email dispatched to {email}.</p>
+                <p className="text-xs font-bold text-blue-700 mt-0.5">Instant Access Code: <span className="font-mono bg-white px-2 py-0.5 rounded border border-blue-200">{activeDispatchedCode}</span></p>
               </div>
             )}
 
