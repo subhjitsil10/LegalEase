@@ -88,11 +88,16 @@ export default function App() {
   };
 
   const handleSubscriptionSuccess = (subData) => {
-    setUser(prev => ({
-      ...prev,
-      is_subscribed: true,
-      subscription_plan: subData.subscription_plan
-    }));
+    const additional = subData.audits_added || (subData.subscription_plan?.includes('30') ? 30 : 10);
+    setUser(prev => {
+      const baseLimit = Math.max(prev?.audit_limit || 3, prev?.doc_upload_count || 0);
+      return {
+        ...prev,
+        is_subscribed: true,
+        subscription_plan: subData.subscription_plan,
+        audit_limit: baseLimit + additional
+      };
+    });
   };
 
   const handleAnalysisSuccess = (res) => {

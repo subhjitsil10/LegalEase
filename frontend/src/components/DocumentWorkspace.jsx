@@ -100,8 +100,10 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
     }
   };
 
-  const remainingAudits = user ? (user.is_subscribed ? 999 : Math.max(0, 3 - (user.doc_upload_count || 0))) : 3;
-  const isQuotaExceeded = user && !user.is_subscribed && (user.doc_upload_count >= 3);
+  const totalLimit = user ? (user.audit_limit || 3) : 3;
+  const usedAudits = user ? (user.doc_upload_count || 0) : 0;
+  const remainingAudits = Math.max(0, totalLimit - usedAudits);
+  const isQuotaExceeded = user && (usedAudits >= totalLimit);
 
   return (
     <section className="max-w-4xl mx-auto mb-8">
@@ -115,18 +117,12 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
           </div>
           <div>
             {user ? (
-              user.is_subscribed ? (
-                <span className="calm-pill text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                  ⭐ Unlimited Pro Audits
-                </span>
-              ) : (
-                <span className={`calm-pill text-xs ${remainingAudits > 0 ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                  🎯 {remainingAudits}/3 Free Audits Left
-                </span>
-              )
+              <span className={`calm-pill text-xs font-bold ${remainingAudits > 0 ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                🎯 {remainingAudits} of {totalLimit} Audits Available
+              </span>
             ) : (
               <span className="calm-pill text-xs bg-slate-100 text-slate-700 border-slate-200">
-                👀 Preview Mode (Sign in to audit)
+                👀 Preview Mode (Sign in for 3 Free Audits)
               </span>
             )}
           </div>
@@ -267,9 +263,9 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
           ) : isQuotaExceeded ? (
             <button
               onClick={onOpenSubscription}
-              className="w-full sm:w-auto py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Sparkles className="w-4 h-4" /> 👑 Upgrade to Pro (₹199/mo) for Unlimited Audits
+              <Sparkles className="w-4 h-4" /> ⚡ Top Up Audit Credits (Packs from ₹299)
             </button>
           ) : (
             <button

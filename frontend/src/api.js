@@ -201,13 +201,15 @@ export const api = {
   // Document Analysis: Direct with Gemini 3.6 Flash
   analyzeDocument: async (file, language = 'English') => {
     const currentUser = localStore.getUser();
+    const currentLimit = currentUser?.audit_limit || 3;
+    const currentUsage = currentUser?.doc_upload_count || 0;
     
-    // Enforce 3 free audit limit
-    if (currentUser && !currentUser.is_subscribed && (currentUser.doc_upload_count || 0) >= 3) {
+    // Enforce audit usage pack limit
+    if (currentUser && currentUsage >= currentLimit) {
       return {
         success: false,
         quota_exceeded: true,
-        error: 'You have utilized all 3 free document compliance audits. Upgrade to Pro Monthly (₹199/mo) or Annual (₹1,999/yr) to continue auditing documents.'
+        error: `You have utilized all ${currentLimit} available document audits (${currentUsage}/${currentLimit} used). Upgrade to the Standard Pack (₹299 for 10 Audits) or Pro Power Pack (₹399 for 30 Audits) to continue auditing documents.`
       };
     }
 
@@ -216,6 +218,7 @@ export const api = {
     if (res.success && res.is_legal && currentUser) {
       const updatedUser = localStore.incrementAuditCount(currentUser);
       res.doc_upload_count = updatedUser.doc_upload_count;
+      res.audit_limit = updatedUser.audit_limit;
       res.is_subscribed = updatedUser.is_subscribed;
 
       // Save audit history to Supabase if configured
@@ -241,13 +244,21 @@ export const api = {
     return await chatWithLegalCounsel(query, documentContext, language);
   },
 
-  // Billing: Checkout
+  // Billing: Checkout for Usage Packs
   processCheckout: async (planName, amountInr, paymentMethod) => {
     const currentUser = localStore.getUser();
     const txnId = `TXN_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
 
+    // Determine additional audits based on selected pack
+    let additionalAudits = 10;
+    if (amountInr === 399 || planName.includes('30')) {
+      additionalAudits = 30;
+    } else if (amountInr === 299 || planName.includes('10')) {
+      additionalAudits = 10;
+    }
+
     if (currentUser) {
-      localStore.setSubscribed(currentUser, planName);
+      const updatedUser = localStore.setSubscribed(currentUser, planName, additionalAudits);
 
       if (isSupabaseConfigured && supabase && currentUser.id) {
         try {
@@ -274,7 +285,8 @@ export const api = {
       transaction_id: txnId,
       plan_name: planName,
       amount_inr: amountInr,
-      message: `🎉 Subscription successfully activated!`
+      audits_added: additionalAudits,
+      message: `🎉 Success! ${additionalAudits} Document Audits have been added to your account.`
     };
   }
 };
