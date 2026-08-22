@@ -19,20 +19,6 @@ export default function Navbar({ user, language, setLanguage, onOpenAuth, onOpen
         {/* Right Actions */}
         <div className="flex items-center gap-3">
           
-          {/* Language Selector */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white/80 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
-            <Globe className="w-3.5 h-3.5 text-blue-600" />
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="bg-transparent text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
-            >
-              <option value="English">English</option>
-              <option value="Hindi (हिंदी)">Hindi (हिंदी)</option>
-              <option value="Bangla (বাংলা)">Bangla (বাংলা)</option>
-            </select>
-          </div>
-
           {/* Pricing / Upgrade Button */}
           {(!user || !user.is_subscribed) ? (
             <button
