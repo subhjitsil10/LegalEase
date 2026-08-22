@@ -302,17 +302,30 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
               </div>
             ) : (
               <div className="p-6 rounded-2xl bg-white/95 border border-sky-200 shadow-sm">
-                <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200">
                   <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
                     <CheckCircle2 className="w-5 h-5" />
                     <span>Legal Compliance Audit Complete</span>
                   </div>
-                  {reportData.audio_url && (
-                    <div className="flex items-center gap-2">
-                      <Volume2 className="w-4 h-4 text-blue-600" />
-                      <audio controls src={reportData.audio_url} className="h-8" />
-                    </div>
-                  )}
+                  
+                  {/* Instant Audio Narration Button */}
+                  <button
+                    onClick={() => {
+                      if ('speechSynthesis' in window) {
+                        if (window.speechSynthesis.speaking) {
+                          window.speechSynthesis.cancel();
+                        } else {
+                          const utterance = new SpeechSynthesisUtterance(reportData.report.substring(0, 1000));
+                          utterance.rate = 0.95;
+                          window.speechSynthesis.speak(utterance);
+                        }
+                      }
+                    }}
+                    className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all"
+                  >
+                    <Volume2 className="w-4 h-4 text-blue-600" />
+                    <span>🔊 Audio Briefing</span>
+                  </button>
                 </div>
 
                 <div className="prose prose-slate max-w-none text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
