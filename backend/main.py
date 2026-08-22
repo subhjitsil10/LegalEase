@@ -9,12 +9,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from database import init_db, get_db
-from auth import (
-    generate_captcha_assets, send_real_otp_email, create_access_token,
-    decode_access_token, get_user_by_email, get_user_by_id
-)
-from ai_service import analyze_legal_document, chat_with_legal_counsel
+try:
+    from database import init_db, get_db
+    from auth import (
+        generate_captcha_assets, send_real_otp_email, create_access_token,
+        decode_access_token, get_user_by_email, get_user_by_id
+    )
+    from ai_service import analyze_legal_document, chat_with_legal_counsel
+except ImportError:
+    from backend.database import init_db, get_db
+    from backend.auth import (
+        generate_captcha_assets, send_real_otp_email, create_access_token,
+        decode_access_token, get_user_by_email, get_user_by_id
+    )
+    from backend.ai_service import analyze_legal_document, chat_with_legal_counsel
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -75,7 +83,7 @@ def get_captcha():
     return assets
 
 class RequestOtpRequest(BaseModel):
-    email: EmailStr
+    email: str
     captcha_token: str  # Original CAPTCHA
     captcha_input: str  # User typed CAPTCHA
 
@@ -105,7 +113,7 @@ def request_otp(req: RequestOtpRequest):
     return {"success": True, "message": f"Verification code dispatched to {req.email}"}
 
 class VerifyOtpRequest(BaseModel):
-    email: EmailStr
+    email: str
     otp_code: str
 
 @app.post("/api/auth/verify-otp")
@@ -147,7 +155,7 @@ def verify_otp(req: VerifyOtpRequest):
         }
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: str
     full_name: str
     phone_number: str
     age: int = 24

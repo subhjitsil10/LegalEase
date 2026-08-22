@@ -5,7 +5,10 @@ from io import BytesIO
 from google import genai
 from dotenv import load_dotenv
 from gtts import gTTS
-from playbook import LEGAL_PLAYBOOK, NON_LEGAL_DOCUMENT_MESSAGE
+try:
+    from playbook import LEGAL_PLAYBOOK, NON_LEGAL_DOCUMENT_MESSAGE
+except ImportError:
+    from backend.playbook import LEGAL_PLAYBOOK, NON_LEGAL_DOCUMENT_MESSAGE
 
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
 load_dotenv(dotenv_path)

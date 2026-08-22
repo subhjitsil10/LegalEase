@@ -11,7 +11,10 @@ from captcha.image import ImageCaptcha
 from gtts import gTTS
 import jwt
 from dotenv import load_dotenv
-from database import get_db
+try:
+    from database import get_db
+except ImportError:
+    from backend.database import get_db
 
 # Load environment
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
