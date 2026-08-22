@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Mail, ShieldCheck, RefreshCw, Volume2, ArrowLeft, User, Phone, Briefcase, Building } from 'lucide-react';
+import { X, Mail, ShieldCheck, RefreshCw, Volume2, ArrowLeft, User, Phone, Briefcase, Building, LogIn, UserPlus, Sparkles } from 'lucide-react';
 import { api, setToken } from '../../api';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
+  const [mode, setMode] = useState('login'); // 'login' or 'signup'
   const [step, setStep] = useState('request_otp'); // 'request_otp', 'verify_otp', 'profile'
   const [email, setEmail] = useState('');
   const [captchaCode, setCaptchaCode] = useState('');
@@ -12,7 +13,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   
   const canvasRef = useRef(null);
 
-  // Extended profile fields
+  // Extended profile fields for Sign Up
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [age, setAge] = useState(24);
@@ -21,8 +22,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeDispatchedCode, setActiveDispatchedCode] = useState('');
-  const [deliveryNotice, setDeliveryNotice] = useState('');
 
   const generateNewCaptcha = () => {
     const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -106,7 +105,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       setTimeout(() => generateNewCaptcha(), 50);
       setError('');
     }
-  }, [isOpen, step]);
+  }, [isOpen, step, mode]);
 
   useEffect(() => {
     let timer;
@@ -133,10 +132,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setLoading(true);
     setError('');
     try {
-      const res = await api.requestOtp(email, captchaCode, captchaInput);
-      if (res && res.code) {
-        setActiveDispatchedCode(res.code);
-      }
+      await api.requestOtp(email, captchaCode, captchaInput);
       setStep('verify_otp');
       setTimeLeft(60);
     } catch (err) {
@@ -149,8 +145,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (!otpCode || otpCode.length !== 4) {
-      setError('Please enter the 4-digit verification code.');
+    if (!otpCode || otpCode.length < 4) {
+      setError('Please enter the 4-digit verification code sent to your email.');
       return;
     }
 
@@ -158,7 +154,17 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setError('');
     try {
       const res = await api.verifyOtp(email, otpCode);
-      if (res.is_new_user) {
+
+      // If user chose Log In and profile exists in database -> Log in directly!
+      if (mode === 'login' && !res.is_new_user && res.user) {
+        setToken(res.token);
+        onAuthSuccess(res.user);
+        onClose();
+        return;
+      }
+
+      // If user chose Sign Up OR new user with no profile -> Open Profile Setup Slide!
+      if (res.is_new_user || mode === 'signup') {
         setStep('profile');
       } else {
         setToken(res.token);
@@ -166,8 +172,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         onClose();
       }
     } catch (err) {
-      // Direct client fallback
-      setStep('profile');
+      setError(err.message || 'Invalid verification code. Please check your email and try again.');
     } finally {
       setLoading(false);
     }
@@ -199,50 +204,70 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       onAuthSuccess(res.user);
       onClose();
     } catch (err) {
-      // Set local profile
-      const localUser = {
-        email,
-        full_name: fullName.trim(),
-        phone_number: phoneNumber.trim(),
-        age: parseInt(age) || 24,
-        profession,
-        org_name: orgName.trim(),
-        doc_upload_count: 0,
-        is_subscribed: false
-      };
-      setToken("local_token_session");
-      onAuthSuccess(localUser);
-      onClose();
+      setError(err.message || 'Failed to complete registration.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-      <div className="modal-glass-container w-full max-w-md p-6 sm:p-8 relative text-slate-800 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md overflow-y-auto">
+      <div className="modal-glass-container w-full max-w-md p-6 sm:p-8 relative text-slate-800 animate-in fade-in zoom-in-95 duration-200 my-8">
         
         {/* Close Button */}
         <button 
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-white/70 hover:bg-white text-slate-500 hover:text-slate-900 border border-slate-200 transition-all"
+          className="absolute top-5 right-5 p-2 rounded-full bg-white/70 hover:bg-white text-slate-500 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
+        {/* Top Brand Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <img src="/favicon.svg" alt="LegalEase" className="w-10 h-10 rounded-xl shadow-sm" />
+          <div>
+            <h3 className="text-xl font-black text-slate-900">LegalEase</h3>
+            <p className="text-xs text-slate-500">Autonomous Legal Intelligence & Playbook Compliance</p>
+          </div>
+        </div>
+
+        {/* Mode Switch Tabs (Log In vs Sign Up) */}
+        {step === 'request_otp' && (
+          <div className="flex p-1 mb-5 bg-slate-100/90 rounded-xl border border-slate-200">
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setError(''); }}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                mode === 'login'
+                  ? 'bg-white text-blue-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Log In</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('signup'); setError(''); }}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                mode === 'signup'
+                  ? 'bg-white text-blue-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Create Account</span>
+            </button>
+          </div>
+        )}
+
         {/* STEP 1: REQUEST OTP */}
         {step === 'request_otp' && (
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <img src="/favicon.svg" alt="LegalEase" className="w-10 h-10 rounded-xl shadow-sm" />
-              <div>
-                <h3 className="text-xl font-extrabold text-slate-900">Sign In to LegalEase</h3>
-                <p className="text-xs text-slate-500">Access enterprise legal audits & AI counsel</p>
-              </div>
-            </div>
-
-            <p className="text-sm text-slate-600 my-4">
-              Enter your work or personal email to receive a secure 4-digit verification code.
+            <p className="text-xs text-slate-600 mb-4 font-medium">
+              {mode === 'login'
+                ? 'Welcome back! Enter your registered email to receive your 4-digit login code.'
+                : 'Create your free account. Enter your email to receive your verification code.'}
             </p>
 
             {error && (
@@ -267,7 +292,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 </div>
               </div>
 
-              {/* Instant Canvas CAPTCHA Box */}
+              {/* Instant Canvas CAPTCHA */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Human Verification</label>
                 <div className="flex items-center gap-3 p-2 bg-white/90 border border-sky-200 rounded-xl">
@@ -280,7 +305,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   <button
                     type="button"
                     onClick={generateNewCaptcha}
-                    className="p-2 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-all"
+                    className="p-2 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
                     title="Refresh CAPTCHA"
                   >
                     <RefreshCw className="w-4 h-4" />
@@ -288,7 +313,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   <button
                     type="button"
                     onClick={playAudioCaptcha}
-                    className="p-2 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50 transition-all"
+                    className="p-2 text-blue-600 hover:text-blue-700 rounded-lg hover:bg-blue-50 transition-all cursor-pointer"
                     title="Listen to Verification Code"
                   >
                     <Volume2 className="w-5 h-5" />
@@ -297,7 +322,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 <input
                   type="text"
                   required
-                  placeholder="Enter code from above image"
+                  placeholder="Enter characters from image"
                   value={captchaInput}
                   onChange={(e) => setCaptchaInput(e.target.value)}
                   className="w-full mt-2 px-3.5 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-wider"
@@ -307,9 +332,16 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                {loading ? 'Dispatching 256-bit Code...' : 'Request Access Code'}
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Dispatching Code to Inbox...</span>
+                  </>
+                ) : (
+                  <span>{mode === 'login' ? 'Send Login Code' : 'Send Verification Code'}</span>
+                )}
               </button>
             </form>
           </div>
@@ -323,19 +355,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-extrabold text-slate-900">Verify Code</h3>
-                <p className="text-xs text-slate-500">Dispatched to <span className="font-semibold text-blue-700">{email}</span></p>
+                <h3 className="text-xl font-extrabold text-slate-900">Check Your Email</h3>
+                <p className="text-xs text-slate-500">Security code sent to <span className="font-semibold text-blue-700">{email}</span></p>
               </div>
             </div>
 
-            {/* Security Verification Notice */}
-            <div className="p-3.5 my-3 bg-blue-50 border border-blue-200 rounded-2xl text-center shadow-xs">
-              <p className="text-xs font-semibold text-slate-700">
-                A secure verification code has been dispatched to:
-              </p>
-              <p className="text-sm font-bold text-blue-700 mt-0.5">{email}</p>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Please check your email inbox and Spam folder to enter the code.
+            <div className="p-3 my-3 bg-blue-50/80 border border-blue-200 rounded-xl text-center">
+              <p className="text-xs text-slate-700 font-medium">
+                📩 We sent a 4-digit code to your email. Check your inbox and Spam folder.
               </p>
             </div>
 
@@ -347,14 +374,15 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
             <form onSubmit={handleVerifyOtp} className="space-y-4 my-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Enter Verification Code</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Enter 4-Digit Code</label>
                 <input
                   type="text"
+                  maxLength={6}
                   required
-                  placeholder="Enter code from email"
+                  placeholder="••••"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
-                  className="w-full tracking-widest text-center text-xl font-bold py-2.5 bg-white border border-sky-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                  className="w-full tracking-widest text-center text-2xl font-black py-2.5 bg-white border border-sky-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -362,14 +390,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {loading ? 'Verifying Code...' : 'Authenticate & Sign In'}
+                  {loading ? 'Authenticating...' : (mode === 'login' ? 'Log In' : 'Verify & Continue')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep('request_otp')}
-                  className="px-4 py-3 bg-white/80 hover:bg-white text-slate-700 font-semibold text-sm border border-slate-200 rounded-xl flex items-center gap-1.5"
+                  className="px-4 py-3 bg-white/80 hover:bg-white text-slate-700 font-semibold text-sm border border-slate-200 rounded-xl flex items-center gap-1.5 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" /> Change
                 </button>
@@ -377,14 +405,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
               <div className="text-center text-xs text-slate-500 mt-2">
                 {timeLeft > 0 ? (
-                  <span>⏳ Resend code in {timeLeft}s</span>
+                  <span>Resend code in {timeLeft}s</span>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => { setStep('request_otp'); fetchCaptcha(); }}
-                    className="text-blue-600 font-semibold hover:underline"
+                    onClick={handleRequestOtp}
+                    className="text-blue-600 font-bold hover:underline cursor-pointer"
                   >
-                    🔄 Resend New Code
+                    Resend Code
                   </button>
                 )}
               </div>
@@ -392,26 +420,30 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </div>
         )}
 
-        {/* STEP 3: COMPLETE PROFILE */}
+        {/* STEP 3: PROFESSIONAL SIGN UP DETAILS SLIDE */}
         {step === 'profile' && (
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 rounded-xl bg-blue-100/80 text-blue-700">
-                <User className="w-6 h-6" />
+              <div className="p-2.5 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md">
+                <Sparkles className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-extrabold text-slate-900">Complete Your Profile</h3>
-                <p className="text-xs text-slate-500">Personalize your legal intelligence workspace</p>
+                <h3 className="text-xl font-black text-slate-900">Complete Your Profile</h3>
+                <p className="text-xs text-slate-500">Set up your LegalEase member identity</p>
               </div>
             </div>
 
+            <p className="text-xs text-slate-600 my-3 font-medium">
+              Verified email: <span className="font-bold text-blue-700">{email}</span>
+            </p>
+
             {error && (
-              <div className="p-3 my-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
+              <div className="p-3 mb-3 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
                 ⚠️ {error}
               </div>
             )}
 
-            <form onSubmit={handleRegister} className="space-y-3.5 mt-3">
+            <form onSubmit={handleRegister} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Full Legal Name *</label>
                 <div className="relative">
@@ -419,68 +451,72 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Jane Doe"
+                    placeholder="Adv. Priya Sharma / John Doe"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type="tel"
+                      required
+                      placeholder="+91 9876543210"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="w-full pl-10 pr-3 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Age</label>
+                  <input
+                    type="number"
+                    min="18"
+                    max="100"
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Profession / Role</label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="tel"
-                    required
-                    placeholder="+91 98765 43210"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Profession *</label>
+                  <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <select
                     value={profession}
                     onChange={(e) => setProfession(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                   >
-                    <option value="Student">Student</option>
-                    <option value="Employee">Employee</option>
-                    <option value="Legal Professional">Legal Professional</option>
-                    <option value="Business Owner / Founder">Business Owner / Founder</option>
-                    <option value="Freelancer">Freelancer</option>
-                    <option value="Other">Other</option>
+                    <option value="Student">Student / Researcher</option>
+                    <option value="Legal Professional">Legal Professional / Advocate</option>
+                    <option value="Corporate Counsel">Corporate Counsel / Paralegal</option>
+                    <option value="Tenant / Landlord">Tenant / Landlord</option>
+                    <option value="Business Owner">Business Owner / Founder</option>
+                    <option value="Freelancer / Consultant">Freelancer / Consultant</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Age *</label>
-                  <input
-                    type="number"
-                    min={16}
-                    max={100}
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Organization / Law Firm (Optional)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Organization / Firm (Optional)</label>
                 <div className="relative">
                   <Building className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <input
                     type="text"
-                    placeholder="e.g. Acme Corp / Law University"
+                    placeholder="e.g. Legal Chambers, University, Tech Corp"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                   />
                 </div>
               </div>
@@ -488,9 +524,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all mt-4"
+                className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                {loading ? 'Initializing Dashboard...' : 'Complete Registration & Access Workspace'}
+                {loading ? 'Creating Account & Initializing 3 Audits...' : '🚀 Complete Sign Up & Enter'}
               </button>
             </form>
           </div>
