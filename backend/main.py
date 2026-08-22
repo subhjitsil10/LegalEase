@@ -36,6 +36,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.responses import FileResponse
+
 # Uploads static directory for user profile avatars
 if os.environ.get("VERCEL"):
     UPLOADS_DIR = "/tmp/uploads"
@@ -44,9 +46,12 @@ else:
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
-@app.get("/")
-def root_status():
-    return {"status": "online", "name": "LegalEase API", "version": "2.0.0"}
+# Frontend static directory
+FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+if os.path.exists(FRONTEND_DIST):
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
 # Dependency to extract and verify authenticated user
 def get_current_user(authorization: Optional[str] = Header(None)):
@@ -368,6 +373,19 @@ def process_checkout(req: CheckoutRequest, user = Depends(get_current_user)):
         "amount_inr": req.amount_inr,
         "message": f"🎉 Subscription successfully activated for {email}!"
     }
+
+@app.get("/{full_path:path}")
+def serve_frontend(full_path: str):
+    if os.path.exists(FRONTEND_DIST):
+        # Check if requested file exists directly (e.g. favicon.svg, logo.svg)
+        target = os.path.join(FRONTEND_DIST, full_path)
+        if full_path and os.path.exists(target) and os.path.isfile(target):
+            return FileResponse(target)
+        # Otherwise return index.html for React SPA
+        index_file = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+    return {"status": "online", "name": "LegalEase API", "version": "2.0.0"}
 
 if __name__ == "__main__":
     import uvicorn
