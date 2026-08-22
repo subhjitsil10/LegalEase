@@ -12,6 +12,7 @@ import ProfileModal from './components/modals/ProfileModal';
 import SubscriptionModal from './components/modals/SubscriptionModal';
 
 import { api } from './api';
+import { supabase, isSupabaseConfigured, localStore } from './supabase';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -23,7 +24,7 @@ export default function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
 
-  // Load existing session on initial mount
+  // Load existing session on initial mount and listen for magic link / confirmation
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -36,6 +37,41 @@ export default function App() {
       }
     };
     checkSession();
+
+    if (isSupabaseConfigured && supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user?.email) {
+          const email = session.user.email;
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+          if (profile) {
+            localStore.setUser(profile);
+            setUser(profile);
+          } else {
+            const newUser = {
+              email,
+              full_name: session.user.user_metadata?.full_name || '',
+              phone_number: '',
+              age: 24,
+              profession: 'Student',
+              org_name: '',
+              avatar_url: '',
+              is_subscribed: false,
+              subscription_plan: 'Free Tier',
+              doc_upload_count: 0
+            };
+            await supabase.from('profiles').upsert([newUser], { onConflict: 'email' });
+            localStore.setUser(newUser);
+            setUser(newUser);
+          }
+        }
+      });
+      return () => subscription?.unsubscribe();
+    }
   }, []);
 
   const handleAuthSuccess = (userData) => {
