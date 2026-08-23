@@ -1,6 +1,6 @@
-# LegalTech AI Full-Stack Platform Launcher
+# LegalEase Full-Stack Platform Launcher
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host "  ⚖️  LegalTech AI - Full-Stack Launcher  " -ForegroundColor Cyan
+Write-Host "    ⚖️  LegalEase - Full-Stack Launcher   " -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 $backendJob = Start-Process python -ArgumentList "backend/main.py" -PassThru -NoNewWindow

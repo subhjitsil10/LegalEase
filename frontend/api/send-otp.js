@@ -20,9 +20,17 @@ export default async function handler(req, res) {
 
   const cleanEmail = email.toLowerCase().trim();
 
-  // 1. Direct High-Speed Gmail SMTP (Sends real 4-digit numeric code to ANY public recipient on Earth)
-  const gmailUser = (process.env.GMAIL_USER || 'subhajitplugin10@gmail.com').replace(/\s+/g, '');
-  const gmailPass = (process.env.GMAIL_APP_PASSWORD || 'yztj pzgn uxps fhxl').replace(/\s+/g, '');
+  const gmailUser = (process.env.GMAIL_USER || '').replace(/\s+/g, '');
+  const gmailPass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
+
+  if (!gmailUser || !gmailPass) {
+    return res.status(200).json({
+      success: true,
+      delivered: false,
+      fallback_code: code,
+      message: 'SMTP credentials not configured in environment.'
+    });
+  }
 
   try {
     const transporter = nodemailer.createTransport({
