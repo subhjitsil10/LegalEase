@@ -2,7 +2,12 @@
   "name": "legalease",
   "version": "2.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "npm run build --prefix frontend"
+  },
+  "dependencies": {
+    "mongodb": "^7.5.0",
+    "nodemailer": "^9.0.5"
   }
 }

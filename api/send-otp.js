@@ -25,8 +25,8 @@ export default async function handler(req, res) {
   const cleanEmail = email.toLowerCase().trim();
 
   // 1. Try Gmail SMTP if credentials configured
-  const gmailUser = (process.env.GMAIL_USER || '').replace(/\s+/g, '');
-  const gmailPass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
+  const gmailUser = (process.env.GMAIL_USER || process.env.VITE_GMAIL_USER || 'subhajitplugin10@gmail.com').replace(/\s+/g, '');
+  const gmailPass = (process.env.GMAIL_APP_PASSWORD || process.env.VITE_GMAIL_APP_PASSWORD || 'yztjpzgnuxpsfhxl').replace(/\s+/g, '');
 
   if (gmailUser && gmailPass) {
     try {

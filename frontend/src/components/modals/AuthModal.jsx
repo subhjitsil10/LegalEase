@@ -285,12 +285,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                       <div className="relative">
                         <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                         <input
-                          type="text"
-                          inputMode="text"
+                          type="tel"
+                          inputMode="numeric"
+                          pattern="[0-9+]*"
                           required
                           placeholder="+91 9876543210"
                           value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9+ ]/g, ''))}
                           className="w-full pl-10 pr-3 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                         />
                       </div>
@@ -300,7 +301,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Age</label>
                       <input
                         type="text"
-                        inputMode="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={3}
                         value={age}
                         onChange={(e) => {
                           const val = e.target.value.replace(/[^0-9]/g, '');
