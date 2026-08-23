@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Phone, Briefcase, Building, Upload, LogOut, CheckCircle } from 'lucide-react';
+import { X, Upload, LogOut, CheckCircle } from 'lucide-react';
 import { api, API_BASE, removeToken } from '../../api';
 
 export default function ProfileModal({ isOpen, user, onClose, onUserUpdate, onLogout }) {

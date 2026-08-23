@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Send, Bot, User, Sparkles } from 'lucide-react';
+import { MessageSquare, Send, Bot, User } from 'lucide-react';
 import { api } from '../api';
 
 export default function LegalChatbot({ user, activeDocumentPath, language, onOpenAuth }) {

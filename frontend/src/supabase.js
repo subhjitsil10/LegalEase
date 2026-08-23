@@ -15,7 +15,6 @@ export const supabase = isSupabaseConfigured
 
 // Local fallback storage helper if user hasn't set up Supabase yet
 const LOCAL_USER_KEY = 'legalease_current_user';
-const LOCAL_AUDITS_KEY = 'legalease_audits_store';
 
 export const localStore = {
   getUser: () => {

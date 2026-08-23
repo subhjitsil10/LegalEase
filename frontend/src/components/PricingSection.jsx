@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Sparkles, Zap, ShieldCheck, Lock, Cpu } from 'lucide-react';
+import { Check, Sparkles, Cpu } from 'lucide-react';
 
 export default function PricingSection({ onSelectPlan }) {
   return (

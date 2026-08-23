@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { X, Check, ShieldCheck, Zap, Star, ArrowLeft, Sparkles, Layers, Cpu, Lock } from 'lucide-react';
+import { X, Check, ArrowLeft, Sparkles, Lock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../../api';
 
-export default function SubscriptionModal({ isOpen, user, onClose, onSubscriptionSuccess }) {
+export default function SubscriptionModal({ isOpen, onClose, onSubscriptionSuccess }) {
   const [selectedPlan, setSelectedPlan] = useState(null); // { name: 'Standard Pack (10 Uses)', price: 199, uses: 10 }
   const [paymentMethod, setPaymentMethod] = useState('⚡ UPI (Google Pay / PhonePe / Paytm / BHIM)');
   const [upiId, setUpiId] = useState('');

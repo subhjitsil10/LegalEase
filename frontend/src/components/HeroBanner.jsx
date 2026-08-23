@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Shield, Zap, Volume2, Lock, AlertTriangle, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Shield, Zap, Volume2, Lock, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export default function HeroBanner() {
   return (

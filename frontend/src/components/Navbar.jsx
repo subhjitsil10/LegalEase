@@ -1,8 +1,8 @@
 import React from 'react';
-import { Scale, Sparkles, User, LogIn, Globe } from 'lucide-react';
+import { Sparkles, LogIn } from 'lucide-react';
 import { API_BASE } from '../api';
 
-export default function Navbar({ user, language, setLanguage, onOpenAuth, onOpenProfile, onOpenSubscription }) {
+export default function Navbar({ user, onOpenAuth, onOpenProfile, onOpenSubscription }) {
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/60 border-b border-white/80 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">

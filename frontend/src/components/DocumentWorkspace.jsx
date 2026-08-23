@@ -21,7 +21,7 @@ export const cleanTextForSpeech = (markdownText) => {
     .replace(/^[=\-_]{2,}\s*$/gm, ''); // divider lines (====, ----)
 
   // 2. Remove all special symbols and punctuation noise: =, *, #, _, ~, `, |, >, [, ], {, }, (, ), \, /, ^, %
-  text = text.replace(/[=*#_~`|>[\]{}()\\\/^%]/g, ' ');
+  text = text.replace(/[=*#_~`|>[\]{}()\\/^%]/g, ' ');
 
   // 3. Remove URLs
   text = text.replace(/https?:\/\/\S+/g, '');

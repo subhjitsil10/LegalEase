@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   try {
     // 1. Upload & Encrypt Document at Backend
     if (req.method === 'POST' && action === 'upload') {
-      const { filename, file_data_base64, mime_type, client_hash, user_email } = req.body || {};
+      const { filename, file_data_base64, mime_type, user_email } = req.body || {};
 
       if (!file_data_base64) {
         return res.status(400).json({ error: 'File data is required for encrypted vault upload' });
