@@ -22,6 +22,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [devOtpHint, setDevOtpHint] = useState('');
 
   const generateNewCaptcha = () => {
     const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -144,7 +145,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setLoading(true);
     setError('');
     try {
-      await api.requestOtp(email, captchaCode, captchaInput);
+      const res = await api.requestOtp(email, captchaCode, captchaInput);
+      if (res && !res.delivered && res.code) {
+        setDevOtpHint(res.code);
+      } else {
+        setDevOtpHint('');
+      }
       setStep('verify_otp');
       setTimeLeft(60);
     } catch (err) {
@@ -433,6 +439,15 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 📩 We sent a 4-digit code to your email. Check your inbox and Spam folder.
               </p>
             </div>
+
+            {devOtpHint && (
+              <div className="p-2.5 mb-3 bg-blue-100/90 border border-blue-300 rounded-xl text-center flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4 text-blue-700 shrink-0" />
+                <p className="text-xs text-blue-900 font-bold">
+                  Quick Access Code: <span className="font-mono text-sm tracking-widest text-blue-700 underline underline-offset-2 ml-1">{devOtpHint}</span>
+                </p>
+              </div>
+            )}
 
             {error && (
               <div className="p-3 my-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">

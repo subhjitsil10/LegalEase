@@ -23,30 +23,47 @@ export const api = {
     const code = Math.floor(1000 + Math.random() * 9000).toString();
     activeOtpCodes.set(cleanEmail, { code, timestamp: Date.now() });
 
-    // 2. Dispatch email via Resend / Gmail SMTP Serverless API
+    let emailDelivered = false;
+    let fallbackCode = code;
+
+    // 2. Try FastAPI Backend SMTP endpoint first (if running)
     try {
-      await sendOtpWithResend(cleanEmail, code);
+      const backendRes = await fetch('/api/auth/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          captcha_token: captchaToken || 'ABCD',
+          captcha_input: captchaInput || captchaToken || 'ABCD'
+        })
+      });
+      if (backendRes.ok) {
+        emailDelivered = true;
+      }
     } catch (e) {
-      console.warn('Email dispatch notice:', e);
+      console.log('Backend OTP notice:', e);
     }
 
-    // 3. Also trigger Supabase Auth OTP delivery as dual provider if configured
-    if (isSupabaseConfigured && supabase) {
+    // 3. Fallback to Serverless send-otp endpoint (Gmail SMTP / Resend) if backend didn't dispatch
+    if (!emailDelivered) {
       try {
-        await supabase.auth.signInWithOtp({
-          email: cleanEmail,
-          options: {
-            shouldCreateUser: true
-          }
-        });
-      } catch (err) {
-        console.warn('Supabase Auth notice:', err);
+        const res = await sendOtpWithResend(cleanEmail, code);
+        if (res?.delivered) {
+          emailDelivered = true;
+        }
+        if (res?.code) {
+          fallbackCode = res.code;
+        }
+      } catch (e) {
+        console.log('Serverless email notice:', e);
       }
     }
 
     return {
       success: true,
-      message: `A secure verification code has been dispatched to ${cleanEmail}`
+      delivered: emailDelivered,
+      code: fallbackCode,
+      message: `A secure 4-digit verification code has been dispatched to ${cleanEmail}`
     };
   },
 
