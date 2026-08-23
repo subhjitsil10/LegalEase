@@ -3,8 +3,8 @@ import { X, Mail, ShieldCheck, RefreshCw, Volume2, ArrowLeft, User, Phone, Brief
 import { api, setToken } from '../../api';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
-  const [mode, setMode] = useState('login'); // 'login' or 'signup'
-  const [step, setStep] = useState('request_otp'); // 'request_otp', 'verify_otp', 'profile'
+  const [mode, setMode] = useState('signup'); // 'signup' or 'login'
+  const [step, setStep] = useState('request_otp'); // 'request_otp', 'verify_otp'
   const [email, setEmail] = useState('');
   const [captchaCode, setCaptchaCode] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
@@ -13,7 +13,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   
   const canvasRef = useRef(null);
 
-  // Extended profile fields for Sign Up
+  // Extended profile fields for Create Account
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [age, setAge] = useState(24);
@@ -123,6 +123,18 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       setError('Please enter a valid email address.');
       return;
     }
+
+    if (mode === 'signup') {
+      if (!fullName.trim()) {
+        setError('Please enter your Full Legal Name.');
+        return;
+      }
+      if (!phoneNumber.trim()) {
+        setError('Please enter your Phone Number.');
+        return;
+      }
+    }
+
     if (!captchaInput || captchaInput.trim().toUpperCase() !== captchaCode.trim().toUpperCase()) {
       setError('CAPTCHA verification mismatch. Please enter the characters shown in the image.');
       generateNewCaptcha();
@@ -153,19 +165,34 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setLoading(true);
     setError('');
     try {
-      const res = await api.verifyOtp(email, otpCode);
-
-      // Load existing user details if available
-      if (res.user) {
-        if (res.user.full_name) setFullName(res.user.full_name);
-        if (res.user.phone_number) setPhoneNumber(res.user.phone_number);
-        if (res.user.age) setAge(res.user.age);
-        if (res.user.profession) setProfession(res.user.profession);
-        if (res.user.org_name) setOrgName(res.user.org_name);
+      if (mode === 'signup') {
+        // Register new user with full captured profile details
+        const regRes = await api.register({
+          email,
+          full_name: fullName.trim(),
+          phone_number: phoneNumber.trim(),
+          age: parseInt(age) || 24,
+          profession,
+          org_name: orgName.trim()
+        });
+        setToken(regRes.token);
+        onAuthSuccess(regRes.user);
+        onClose();
+      } else {
+        // Verify login
+        const loginRes = await api.verifyOtp(email, otpCode);
+        setToken(loginRes.token);
+        onAuthSuccess(loginRes.user || {
+          email,
+          full_name: fullName || 'Member',
+          phone_number: phoneNumber || '',
+          profession: profession || 'Student',
+          is_subscribed: false,
+          subscription_plan: 'Free Tier',
+          doc_upload_count: 0
+        });
+        onClose();
       }
-
-      // Always open the Details Slide to confirm/enter profile details
-      setStep('profile');
     } catch (err) {
       setError(err.message || 'Invalid verification code. Please check your email and try again.');
     } finally {
@@ -173,41 +200,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     }
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    if (!fullName.trim()) {
-      setError('Please enter your Full Legal Name.');
-      return;
-    }
-    if (!phoneNumber.trim()) {
-      setError('Please enter your Phone Number.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    try {
-      const res = await api.register({
-        email,
-        full_name: fullName.trim(),
-        phone_number: phoneNumber.trim(),
-        age: parseInt(age) || 24,
-        profession,
-        org_name: orgName.trim()
-      });
-      setToken(res.token);
-      onAuthSuccess(res.user);
-      onClose();
-    } catch (err) {
-      setError(err.message || 'Failed to complete registration.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md overflow-y-auto">
-      <div className="modal-glass-container w-full max-w-md p-6 sm:p-8 relative text-slate-800 animate-in fade-in zoom-in-95 duration-200 my-8">
+      <div className="modal-glass-container w-full max-w-lg p-6 sm:p-8 relative text-slate-800 animate-in fade-in zoom-in-95 duration-200 my-8">
         
         {/* Close Button */}
         <button 
@@ -226,7 +221,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </div>
         </div>
 
-        {/* Mode Switch Tabs (Log In vs Sign Up) */}
+        {/* Mode Switch Tabs (Log In vs Create Account) */}
         {step === 'request_otp' && (
           <div className="flex p-1 mb-5 bg-slate-100/90 rounded-xl border border-slate-200">
             <button
@@ -256,24 +251,102 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </div>
         )}
 
-        {/* STEP 1: REQUEST OTP */}
+        {/* STEP 1: REQUEST OTP (With full details in Create Account) */}
         {step === 'request_otp' && (
           <div>
-            <p className="text-xs text-slate-600 mb-4 font-medium">
-              {mode === 'login'
-                ? 'Welcome back! Enter your registered email to receive your 4-digit login code.'
-                : 'Create your free account. Enter your email to receive your verification code.'}
-            </p>
-
             {error && (
               <div className="p-3 mb-4 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
                 ⚠️ {error}
               </div>
             )}
 
-            <form onSubmit={handleRequestOtp} className="space-y-4">
+            <form onSubmit={handleRequestOtp} className="space-y-3.5">
+              
+              {/* If Create Account Mode: Show Full Details Inputs */}
+              {mode === 'signup' && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Full Legal Name *</label>
+                    <div className="relative">
+                      <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Adv. Priya Sharma / John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
+                      <div className="relative">
+                        <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                        <input
+                          type="tel"
+                          required
+                          placeholder="+91 9876543210"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          className="w-full pl-10 pr-3 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Age</label>
+                      <input
+                        type="number"
+                        min="18"
+                        max="100"
+                        value={age}
+                        onChange={(e) => setAge(e.target.value)}
+                        className="w-full px-3 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Profession / Role</label>
+                    <div className="relative">
+                      <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                      <select
+                        value={profession}
+                        onChange={(e) => setProfession(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      >
+                        <option value="Student">Student / Researcher</option>
+                        <option value="Legal Professional">Legal Professional / Advocate</option>
+                        <option value="Corporate Counsel">Corporate Counsel / Paralegal</option>
+                        <option value="Tenant / Landlord">Tenant / Landlord</option>
+                        <option value="Business Owner">Business Owner / Founder</option>
+                        <option value="Freelancer / Consultant">Freelancer / Consultant</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Organization / Firm (Optional)</label>
+                    <div className="relative">
+                      <Building className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                      <input
+                        type="text"
+                        placeholder="e.g. Legal Chambers, University, Tech Corp"
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Email Address */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Email Address *</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <input
@@ -282,7 +355,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-10 pr-4 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -294,7 +367,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   <canvas
                     ref={canvasRef}
                     width={180}
-                    height={46}
+                    height={44}
                     className="rounded-lg border border-slate-200 shadow-inner bg-sky-50"
                   />
                   <button
@@ -320,14 +393,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   placeholder="Enter characters from image"
                   value={captchaInput}
                   onChange={(e) => setCaptchaInput(e.target.value)}
-                  className="w-full mt-2 px-3.5 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-wider"
+                  className="w-full mt-2 px-3.5 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-wider"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
                 {loading ? (
                   <>
@@ -335,7 +408,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     <span>Dispatching Code to Inbox...</span>
                   </>
                 ) : (
-                  <span>{mode === 'login' ? 'Send Login Code' : 'Send Verification Code'}</span>
+                  <span>{mode === 'login' ? 'Send Login Code' : '🚀 Create Account & Send Verification Code'}</span>
                 )}
               </button>
             </form>
@@ -387,7 +460,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   disabled={loading}
                   className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {loading ? 'Authenticating...' : (mode === 'login' ? 'Log In' : 'Verify & Continue')}
+                  {loading ? 'Authenticating...' : (mode === 'login' ? 'Log In' : 'Complete Account Creation')}
                 </button>
                 <button
                   type="button"
@@ -411,118 +484,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   </button>
                 )}
               </div>
-            </form>
-          </div>
-        )}
-
-        {/* STEP 3: PROFESSIONAL SIGN UP DETAILS SLIDE */}
-        {step === 'profile' && (
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-xl font-black text-slate-900">Complete Your Profile</h3>
-                <p className="text-xs text-slate-500">Set up your LegalEase member identity</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 my-3 font-medium">
-              Verified email: <span className="font-bold text-blue-700">{email}</span>
-            </p>
-
-            {error && (
-              <div className="p-3 mb-3 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
-                ⚠️ {error}
-              </div>
-            )}
-
-            <form onSubmit={handleRegister} className="space-y-3.5">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Full Legal Name *</label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Adv. Priya Sharma / John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+91 9876543210"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Age</label>
-                  <input
-                    type="number"
-                    min="18"
-                    max="100"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Profession / Role</label>
-                <div className="relative">
-                  <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <select
-                    value={profession}
-                    onChange={(e) => setProfession(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                  >
-                    <option value="Student">Student / Researcher</option>
-                    <option value="Legal Professional">Legal Professional / Advocate</option>
-                    <option value="Corporate Counsel">Corporate Counsel / Paralegal</option>
-                    <option value="Tenant / Landlord">Tenant / Landlord</option>
-                    <option value="Business Owner">Business Owner / Founder</option>
-                    <option value="Freelancer / Consultant">Freelancer / Consultant</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Organization / Firm (Optional)</label>
-                <div className="relative">
-                  <Building className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    placeholder="e.g. Legal Chambers, University, Tech Corp"
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {loading ? 'Creating Account & Initializing 3 Audits...' : '🚀 Complete Sign Up & Enter'}
-              </button>
             </form>
           </div>
         )}
