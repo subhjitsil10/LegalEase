@@ -368,11 +368,8 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
         {/* Workspace Title & Quota Badge */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <span>Document Compliance Studio</span>
-              <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
-                Gemini 3.1 Pro & Flash
-              </span>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+              Document Compliance Studio
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 mt-1">
               Upload or scan your agreement for autonomous 4-pillar risk & redline analysis.
@@ -555,7 +552,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Auditing with Gemini 3.1 Pro...</span>
+                  <span>Auditing Document Compliance...</span>
                 </>
               ) : (
                 <>
@@ -600,7 +597,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
                   <div className="flex items-center gap-2 text-emerald-700 font-black text-base">
                     <CheckCircle2 className="w-5 h-5" />
-                    <span>Autonomous Legal Audit Report ({reportData.engine || 'Gemini 3.1 Pro'})</span>
+                    <span>Autonomous Legal Compliance Audit</span>
                   </div>
                   
                   {/* Clean Voice Narration Button */}

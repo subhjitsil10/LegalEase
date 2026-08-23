@@ -53,7 +53,7 @@ export default function HeroBanner() {
           </span>
           <span className="doc-tag">
             <Zap className="w-3.5 h-3.5 text-amber-500" />
-            <span>Gemini 3.1 Pro Engine</span>
+            <span>Autonomous Clause Reasoner</span>
           </span>
           <span className="doc-tag">
             <Volume2 className="w-3.5 h-3.5 text-sky-600" />
