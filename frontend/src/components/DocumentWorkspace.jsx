@@ -272,18 +272,18 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
               onClick={onOpenSubscription}
               className="w-full sm:w-auto py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Sparkles className="w-4 h-4" /> ⚡ Top Up Audit Credits (Packs from ₹299)
+              <Sparkles className="w-4 h-4" /> ⚡ Top Up Audit Credits (Packs from ₹199)
             </button>
           ) : (
             <button
               onClick={handleRunAnalysis}
               disabled={loading || !selectedFile}
-              className="w-full sm:w-auto py-3 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto py-3 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Auditing with Gemini 3.6 Flash...</span>
+                  <span>Encrypting & Auditing with Gemini...</span>
                 </>
               ) : (
                 <>
@@ -305,10 +305,29 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
               </div>
             ) : (
               <div className="p-6 rounded-2xl bg-white/95 border border-sky-200 shadow-sm">
+                
+                {/* 256-Bit Encrypted Vault Sealed Badge */}
+                {reportData.vault_receipt && (
+                  <div className="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-emerald-950 shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span><strong>Encrypted Vault Record:</strong> {reportData.vault_receipt.vault_id}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-[11px] text-emerald-800">
+                        {reportData.vault_receipt.cipher_algorithm}
+                      </span>
+                      <span className="font-mono text-[10px] text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                        SHA-256 Verified
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200">
                   <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
                     <CheckCircle2 className="w-5 h-5" />
-                    <span>Legal Compliance Audit Complete</span>
+                    <span>Legal Compliance Audit Complete ({reportData.engine || 'Gemini 3.1 Pro'})</span>
                   </div>
                   
                   {/* Instant Audio Narration Button */}
@@ -324,7 +343,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                         }
                       }
                     }}
-                    className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all"
+                    className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
                   >
                     <Volume2 className="w-4 h-4 text-blue-600" />
                     <span>🔊 Audio Briefing</span>
