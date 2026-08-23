@@ -46,16 +46,29 @@ Provide your audit structured with:
 4. **Actionable Next Steps Before Signing**
 `;
 
+export const getMimeType = (file) => {
+  if (file.type && file.type !== 'application/octet-stream') {
+    return file.type;
+  }
+  const name = (file.name || '').toLowerCase();
+  if (name.endsWith('.pdf')) return 'application/pdf';
+  if (name.endsWith('.png')) return 'image/png';
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
+  if (name.endsWith('.webp')) return 'image/webp';
+  if (name.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  return 'image/jpeg';
+};
+
 // Helper: Convert browser File / Blob to base64
 export const fileToGenerativePart = async (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64Data = reader.result.split(',')[1];
+      const base64Data = reader.result ? reader.result.split(',')[1] : '';
       resolve({
         inlineData: {
           data: base64Data,
-          mimeType: file.type || 'application/pdf'
+          mimeType: getMimeType(file)
         }
       });
     };

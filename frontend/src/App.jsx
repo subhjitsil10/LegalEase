@@ -15,6 +15,14 @@ import { api } from './api';
 import { supabase, isSupabaseConfigured, localStore } from './supabase';
 
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <LegalEaseApp />
+    </ErrorBoundary>
+  );
+}
+
+function LegalEaseApp() {
   const [user, setUser] = useState(null);
   const [language, setLanguage] = useState('English');
   const [activeDocumentPath, setActiveDocumentPath] = useState(null);
@@ -189,4 +197,44 @@ export default function App() {
 
     </div>
   );
+}
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('LegalEase Global ErrorBoundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 text-slate-800">
+          <div className="liquid-glass-card max-w-md w-full p-8 text-center shadow-xl">
+            <div className="w-12 h-12 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4 font-bold text-xl">
+              ⚖️
+            </div>
+            <h2 className="text-xl font-black text-slate-900 mb-2">LegalEase Recovery Shield</h2>
+            <p className="text-xs text-slate-600 mb-6">
+              A temporary display error was safely intercepted. Tap below to resume your workspace.
+            </p>
+            <button
+              onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+            >
+              🔄 Refresh & Resume Workspace
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
