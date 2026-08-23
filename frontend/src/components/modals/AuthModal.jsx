@@ -155,22 +155,17 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     try {
       const res = await api.verifyOtp(email, otpCode);
 
-      // If user chose Log In and profile exists in database -> Log in directly!
-      if (mode === 'login' && !res.is_new_user && res.user) {
-        setToken(res.token);
-        onAuthSuccess(res.user);
-        onClose();
-        return;
+      // Load existing user details if available
+      if (res.user) {
+        if (res.user.full_name) setFullName(res.user.full_name);
+        if (res.user.phone_number) setPhoneNumber(res.user.phone_number);
+        if (res.user.age) setAge(res.user.age);
+        if (res.user.profession) setProfession(res.user.profession);
+        if (res.user.org_name) setOrgName(res.user.org_name);
       }
 
-      // If user chose Sign Up OR new user with no profile -> Open Profile Setup Slide!
-      if (res.is_new_user || mode === 'signup') {
-        setStep('profile');
-      } else {
-        setToken(res.token);
-        onAuthSuccess(res.user);
-        onClose();
-      }
+      // Always open the Details Slide to confirm/enter profile details
+      setStep('profile');
     } catch (err) {
       setError(err.message || 'Invalid verification code. Please check your email and try again.');
     } finally {
