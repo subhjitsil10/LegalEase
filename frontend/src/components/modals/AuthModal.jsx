@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Mail, ShieldCheck, RefreshCw, Volume2, ArrowLeft, User, Phone, Briefcase, Building, LogIn, UserPlus, Sparkles } from 'lucide-react';
+import { X, Mail, ShieldCheck, RefreshCw, Volume2, ArrowLeft, User, Phone, Briefcase, Building, LogIn, UserPlus } from 'lucide-react';
 import { api, setToken } from '../../api';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
@@ -22,7 +22,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [devOtpHint, setDevOtpHint] = useState('');
 
   const generateNewCaptcha = () => {
     const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -145,17 +144,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setLoading(true);
     setError('');
     try {
-      const res = await api.requestOtp(email, captchaCode, captchaInput);
-      if (res && !res.delivered && res.code) {
-        setDevOtpHint(res.code);
-      } else {
-        setDevOtpHint('');
-      }
+      await api.requestOtp(email, captchaCode, captchaInput);
       setStep('verify_otp');
       setTimeLeft(60);
     } catch (err) {
-      setStep('verify_otp');
-      setTimeLeft(60);
+      setError(err.message || 'Failed to send verification code. Please try again.');
+      generateNewCaptcha();
     } finally {
       setLoading(false);
     }
@@ -172,7 +166,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setError('');
     try {
       if (mode === 'signup') {
-        // Register new user with full captured profile details
+        // Register new user — api.register verifies OTP on server first, then creates account
         const regRes = await api.register({
           email,
           full_name: fullName.trim(),
@@ -180,23 +174,22 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           age: parseInt(age) || 24,
           profession,
           org_name: orgName.trim()
-        });
+        }, otpCode);
         setToken(regRes.token);
         onAuthSuccess(regRes.user);
         onClose();
       } else {
-        // Verify login
+        // Login — verify OTP on server and get JWT token
         const loginRes = await api.verifyOtp(email, otpCode);
+        if (loginRes.is_new_user) {
+          // User doesn't have a profile yet — switch to signup mode
+          setMode('signup');
+          setStep('request_otp');
+          setError('No account found for this email. Please create an account first.');
+          return;
+        }
         setToken(loginRes.token);
-        onAuthSuccess(loginRes.user || {
-          email,
-          full_name: fullName || 'Member',
-          phone_number: phoneNumber || '',
-          profession: profession || 'Student',
-          is_subscribed: false,
-          subscription_plan: 'Free Tier',
-          doc_upload_count: 0
-        });
+        onAuthSuccess(loginRes.user);
         onClose();
       }
     } catch (err) {
@@ -292,7 +285,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                       <div className="relative">
                         <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                         <input
-                          type="tel"
+                          type="text"
+                          inputMode="text"
                           required
                           placeholder="+91 9876543210"
                           value={phoneNumber}
@@ -305,11 +299,15 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Age</label>
                       <input
-                        type="number"
-                        min="18"
-                        max="100"
+                        type="text"
+                        inputMode="text"
                         value={age}
-                        onChange={(e) => setAge(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 120)) {
+                            setAge(val);
+                          }
+                        }}
                         className="w-full px-3 py-2 bg-white/90 border border-sky-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                       />
                     </div>
@@ -440,14 +438,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               </p>
             </div>
 
-            {devOtpHint && (
-              <div className="p-2.5 mb-3 bg-blue-100/90 border border-blue-300 rounded-xl text-center flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-700 shrink-0" />
-                <p className="text-xs text-blue-900 font-bold">
-                  Quick Access Code: <span className="font-mono text-sm tracking-widest text-blue-700 underline underline-offset-2 ml-1">{devOtpHint}</span>
-                </p>
-              </div>
-            )}
 
             {error && (
               <div className="p-3 my-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl">
@@ -460,11 +450,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Enter 4-Digit Code</label>
                 <input
                   type="text"
-                  maxLength={6}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
                   required
                   placeholder="••••"
                   value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
                   className="w-full tracking-widest text-center text-2xl font-black py-2.5 bg-white border border-sky-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

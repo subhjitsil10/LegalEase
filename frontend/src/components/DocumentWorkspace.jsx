@@ -561,7 +561,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
               onClick={onOpenSubscription}
               className="w-full sm:w-auto py-3 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Sparkles className="w-4 h-4" /> ⚡ Top Up Audit Credits (Packs from ₹199)
+              <Sparkles className="w-4 h-4" /> ⚡ Top Up Audit Credits
             </button>
           ) : (
             <button

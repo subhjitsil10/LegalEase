@@ -19,25 +19,14 @@ export default function Navbar({ user, onOpenAuth, onOpenProfile, onOpenSubscrip
         {/* Right Actions */}
         <div className="flex items-center gap-3">
           
-          {/* Pricing / Top-Up Button */}
-          {user ? (
-            <button
-              onClick={onOpenSubscription}
-              className="px-3 py-1.5 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 border border-blue-200 font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              <span>{Math.max(0, (user.audit_limit || 3) - (user.doc_upload_count || 0))} Left</span>
-              <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.2 rounded-md ml-0.5 font-bold">+Top Up</span>
-            </button>
-          ) : (
-            <button
-              onClick={onOpenSubscription}
-              className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Packs from ₹199</span>
-            </button>
-          )}
+          {/* Plans Button */}
+          <button
+            onClick={onOpenSubscription}
+            className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Plans</span>
+          </button>
 
           {/* Auth / Profile Trigger */}
           {user ? (
