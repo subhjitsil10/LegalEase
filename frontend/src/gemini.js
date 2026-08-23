@@ -92,7 +92,7 @@ export const auditDocumentWithGemini = async (file, language = 'English', isProM
     ${LEGAL_PLAYBOOK}
     =========================================
     CRITICAL LANGUAGE INSTRUCTION:
-    If and ONLY if the document is verified as an authentic legal document, translate the ENTIRE analysis and respond FLUENTLY in ${language}.
+    If and ONLY if the document is verified as an authentic legal document, respond entirely and fluently in ${language} (including authentic Bhojpuri if Bhojpuri is chosen, or Hindi, Bangla, English).
     If this is NOT a legal document, do NOT translate, do NOT provide any descriptions, and respond ONLY with:
     ${NON_LEGAL_DOCUMENT_MESSAGE}
     `;

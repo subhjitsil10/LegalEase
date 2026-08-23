@@ -45,6 +45,18 @@ export const cleanTextForSpeech = (markdownText) => {
   return text;
 };
 
+// Helper: Strip unusable special characters from display text
+const sanitizeDisplayLine = (str) => {
+  if (!str) return '';
+  return str
+    .replace(/^[=\-_]{2,}\s*$/g, '')
+    .replace(/[=*#_~`|^]/g, ' ')
+    .replace(/\[\s*/g, '')
+    .replace(/\s*\]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 // Sleek Interactive Formatter for High-Impact Legal Audit
 function FormattedLegalAudit({ reportText }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
@@ -66,85 +78,105 @@ function FormattedLegalAudit({ reportText }) {
   };
 
   return (
-    <div className="space-y-6 text-slate-800">
+    <div className="space-y-6 text-slate-900">
       {lines.map((line, idx) => {
-        const trimmed = line.trim();
-        if (!trimmed) return null;
+        const rawTrimmed = line.trim();
+        if (!rawTrimmed) return null;
 
-        // 1. Major Section Headings (## or 🚨, 📊, 🛡️, 📝)
-        if (trimmed.startsWith('## ') || trimmed.startsWith('# ') || trimmed.includes('RED FLAGS') || trimmed.includes('EXECUTIVE SUMMARY') || trimmed.includes('4-PILLAR') || trimmed.includes('NEXT STEPS')) {
-          const headingText = trimmed.replace(/^#{1,4}\s*/, '').replace(/\*\*/g, '');
-          const isRedFlagHeader = headingText.toUpperCase().includes('RED FLAG');
+        // 1. Major Section Headings (Fixed Darker Tone & Bold Aesthetics)
+        if (
+          rawTrimmed.startsWith('## ') || 
+          rawTrimmed.startsWith('# ') || 
+          rawTrimmed.toUpperCase().includes('RED FLAGS') || 
+          rawTrimmed.toUpperCase().includes('EXECUTIVE SUMMARY') || 
+          rawTrimmed.toUpperCase().includes('4-PILLAR') || 
+          rawTrimmed.toUpperCase().includes('NEXT STEPS')
+        ) {
+          const cleanHeading = sanitizeDisplayLine(rawTrimmed);
+          const isRedFlagHeader = cleanHeading.toUpperCase().includes('RED FLAG');
           
           return (
             <div 
               key={idx} 
-              className={`pt-4 pb-2 border-b flex items-center gap-2 ${
+              className={`pt-5 pb-2.5 border-b-2 flex items-center gap-2.5 ${
                 isRedFlagHeader 
-                  ? 'border-red-200 text-red-700 mt-2' 
-                  : 'border-slate-200 text-slate-900 mt-4'
+                  ? 'border-red-600 bg-red-50/60 p-3 rounded-2xl text-red-950 mt-3 shadow-xs' 
+                  : 'border-slate-900 text-slate-950 mt-5'
               }`}
             >
-              {isRedFlagHeader && <AlertTriangle className="w-5 h-5 text-red-600 animate-bounce" />}
-              <h4 className="text-base sm:text-lg font-black tracking-tight uppercase">
-                {headingText}
+              {isRedFlagHeader && <AlertTriangle className="w-5 h-5 text-red-700 animate-bounce flex-shrink-0" />}
+              <h4 className="text-base sm:text-lg font-black tracking-tight uppercase text-slate-950">
+                {cleanHeading}
               </h4>
             </div>
           );
         }
 
         // 2. Red Flag Clause Items with Risk Levels (🔴 HIGH RISK / 🟡 MEDIUM RISK / 🟢 LOW RISK)
-        if (trimmed.includes('HIGH RISK') || trimmed.includes('MEDIUM RISK') || trimmed.includes('LOW RISK') || trimmed.startsWith('- 🔴') || trimmed.startsWith('- 🟡') || trimmed.startsWith('- 🟢')) {
-          const isHigh = trimmed.includes('HIGH') || trimmed.includes('🔴');
-          const isMed = trimmed.includes('MEDIUM') || trimmed.includes('🟡');
+        if (
+          rawTrimmed.includes('HIGH RISK') || 
+          rawTrimmed.includes('MEDIUM RISK') || 
+          rawTrimmed.includes('LOW RISK') || 
+          rawTrimmed.startsWith('- 🔴') || 
+          rawTrimmed.startsWith('- 🟡') || 
+          rawTrimmed.startsWith('- 🟢')
+        ) {
+          const isHigh = rawTrimmed.includes('HIGH') || rawTrimmed.includes('🔴');
+          const isMed = rawTrimmed.includes('MEDIUM') || rawTrimmed.includes('🟡');
+          const cleanedText = sanitizeDisplayLine(
+            rawTrimmed
+              .replace(/^[-*•]\s*/, '')
+              .replace(/(🔴\s*HIGH\s*RISK|🟡\s*MEDIUM\s*RISK|🟢\s*LOW\s*RISK)\s*:?/i, '')
+          );
           
           return (
             <div 
               key={idx} 
-              className={`p-4 rounded-2xl border transition-all my-2 shadow-xs ${
+              className={`p-4 rounded-2xl border-2 transition-all my-2 shadow-xs ${
                 isHigh 
-                  ? 'bg-red-50/90 border-red-200 text-red-950' 
+                  ? 'bg-red-50/90 border-red-300 text-red-950' 
                   : isMed 
-                  ? 'bg-amber-50/90 border-amber-200 text-amber-950' 
-                  : 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
+                  ? 'bg-amber-50/90 border-amber-300 text-amber-950' 
+                  : 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
               }`}
             >
-              <div className="flex items-center gap-2 font-black text-sm">
+              <div className="flex items-center gap-2.5 font-black text-sm text-slate-950">
                 <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-black uppercase tracking-wider text-white shadow-xs ${
-                  isHigh ? 'bg-red-600' : isMed ? 'bg-amber-600' : 'bg-emerald-600'
+                  isHigh ? 'bg-red-700' : isMed ? 'bg-amber-600' : 'bg-emerald-700'
                 }`}>
                   {isHigh ? '🔴 High Risk' : isMed ? '🟡 Moderate Risk' : '🟢 Low Risk'}
                 </span>
-                <span>{trimmed.replace(/^[-*•]\s*/, '').replace(/\[.*?\]\s*:?/, '').replace(/\*\*/g, '')}</span>
+                <span className="font-extrabold text-slate-950">{cleanedText}</span>
               </div>
             </div>
           );
         }
 
-        // 3. Attorney Redlines (Highlighted Box with 1-Click Copy)
-        if (trimmed.toLowerCase().includes('attorney redline') || trimmed.toLowerCase().includes('recommended redline')) {
-          const redlineContent = trimmed.replace(/.*?(attorney redline|recommended redline):?\s*/i, '').replace(/["'`]/g, '');
+        // 3. Attorney Redlines (Darker Contrast Box with 1-Click Copy)
+        if (rawTrimmed.toLowerCase().includes('attorney redline') || rawTrimmed.toLowerCase().includes('recommended redline')) {
+          const rawRedline = rawTrimmed.replace(/.*?(attorney redline|recommended redline):?\s*/i, '');
+          const cleanRedline = sanitizeDisplayLine(rawRedline).replace(/["'`]/g, '');
           
           return (
-            <div key={idx} className="my-2 p-3.5 bg-slate-900 text-emerald-300 rounded-xl border border-slate-700 font-mono text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+            <div key={idx} className="my-2.5 p-4 bg-slate-950 text-emerald-300 rounded-2xl border border-slate-800 font-mono text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
               <div className="flex items-start gap-2">
-                <span className="text-amber-400 font-bold font-sans text-xs">⚖️ Redline Fix:</span>
-                <span className="leading-relaxed">"{redlineContent}"</span>
+                <span className="text-amber-400 font-black font-sans text-xs flex-shrink-0">⚖️ Attorney Redline:</span>
+                <span className="leading-relaxed font-semibold">"{cleanRedline}"</span>
               </div>
               <button
                 type="button"
-                onClick={() => handleCopyRedline(redlineContent, idx)}
-                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-[10px] font-sans font-bold flex items-center gap-1 self-end sm:self-auto transition-all cursor-pointer border border-slate-600"
+                onClick={() => handleCopyRedline(cleanRedline, idx)}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-[11px] font-sans font-bold flex items-center gap-1.5 self-end sm:self-auto transition-all cursor-pointer border border-slate-700 shadow-xs"
                 title="Copy suggested attorney wording"
               >
                 {copiedIndex === idx ? (
                   <>
-                    <Check className="w-3 h-3 text-emerald-400" />
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3 h-3" />
+                    <Copy className="w-3.5 h-3.5 text-slate-300" />
                     <span>Copy Redline</span>
                   </>
                 )}
@@ -154,19 +186,23 @@ function FormattedLegalAudit({ reportText }) {
         }
 
         // 4. Actionable Next Steps Checkboxes
-        if (trimmed.match(/^\d+\.\s+/) || (trimmed.startsWith('- ') && trimmed.toLowerCase().includes('negotiate'))) {
+        if (rawTrimmed.match(/^\d+\.\s+/) || (rawTrimmed.startsWith('- ') && rawTrimmed.toLowerCase().includes('negotiate'))) {
+          const cleanStep = sanitizeDisplayLine(rawTrimmed.replace(/^\d+\.\s+/, '').replace(/^[-*•]\s*/, ''));
           return (
-            <div key={idx} className="flex items-start gap-2.5 p-2.5 bg-blue-50/60 rounded-xl border border-blue-100 text-xs font-semibold text-slate-800 my-1.5">
-              <CheckSquare className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <span>{trimmed.replace(/^\d+\.\s+/, '').replace(/^[-*•]\s*/, '').replace(/\*\*/g, '')}</span>
+            <div key={idx} className="flex items-start gap-2.5 p-3 bg-slate-100/80 rounded-xl border border-slate-300 text-xs font-bold text-slate-950 my-2 shadow-xs">
+              <CheckSquare className="w-4 h-4 text-blue-700 flex-shrink-0 mt-0.5" />
+              <span>{cleanStep}</span>
             </div>
           );
         }
 
-        // 5. Standard bullet items and text
+        // 5. Standard bullet items and text (Clean & Darker Font Tone)
+        const cleanContent = sanitizeDisplayLine(rawTrimmed.replace(/^[-*•]\s*/, '• '));
+        if (!cleanContent) return null;
+
         return (
-          <p key={idx} className="text-xs sm:text-sm text-slate-700 leading-relaxed my-1">
-            {trimmed.replace(/^[-*•]\s*/, '• ').replace(/\*\*(.*?)\*\*/g, '$1')}
+          <p key={idx} className="text-xs sm:text-sm text-slate-900 font-medium leading-relaxed my-1.5">
+            {cleanContent}
           </p>
         );
       })}
@@ -271,7 +307,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
     }
   };
 
-  // Audio Speech Handler
+  // Audio Speech Handler (with Bhojpuri and Indian regional language support)
   const toggleAudioBriefing = () => {
     if (!('speechSynthesis' in window)) {
       alert('Speech synthesis is not supported on this browser.');
@@ -292,8 +328,8 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
     utterance.rate = 0.92;
     utterance.pitch = 1.0;
 
-    // Adjust language code if available
-    if (language?.includes('Hindi')) {
+    // Adjust language code
+    if (language?.includes('Hindi') || language?.includes('Bhojpuri')) {
       utterance.lang = 'hi-IN';
     } else if (language?.includes('Bangla')) {
       utterance.lang = 'bn-IN';
@@ -368,7 +404,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
         {/* Workspace Title & Quota Badge */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+            <h3 className="text-2xl font-black text-slate-950 tracking-tight">
               Document Compliance Studio
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 mt-1">
@@ -378,16 +414,16 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
 
           {/* Usage Quota Counter */}
           {user && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/90 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 self-start sm:self-auto shadow-xs">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/90 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 self-start sm:self-auto shadow-xs">
               <span>Audits Remaining:</span>
-              <span className={`px-2 py-0.5 rounded-md text-white ${isQuotaExceeded ? 'bg-red-500' : 'bg-blue-600'}`}>
+              <span className={`px-2 py-0.5 rounded-md text-white font-black ${isQuotaExceeded ? 'bg-red-500' : 'bg-blue-600'}`}>
                 {Math.max(0, userLimit - userUsage)} / {userLimit}
               </span>
             </div>
           )}
         </div>
 
-        {/* Tabs and Output Language Selector */}
+        {/* Tabs and Output Language Selector (Supports English, Hindi, Bangla, Bhojpuri) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           
           {/* Tabs */}
@@ -416,7 +452,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
             </div>
 
             <div className="flex items-center gap-2 p-1.5 px-3 bg-white/90 border border-sky-200 rounded-xl shadow-xs">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
                 <Globe className="w-3.5 h-3.5 text-blue-600" />
                 <span>Output Language:</span>
               </div>
@@ -428,6 +464,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                 <option value="English">English</option>
                 <option value="Hindi (हिंदी)">Hindi (हिंदी)</option>
                 <option value="Bangla (বাংলা)">Bangla (বাংলা)</option>
+                <option value="Bhojpuri (भोजपुरी)">Bhojpuri (भोजपुरी)</option>
               </select>
             </div>
           </div>
@@ -594,9 +631,9 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                 )}
 
                 {/* Header Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
-                  <div className="flex items-center gap-2 text-emerald-700 font-black text-base">
-                    <CheckCircle2 className="w-5 h-5" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b-2 border-slate-900">
+                  <div className="flex items-center gap-2 text-slate-950 font-black text-lg">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     <span>Autonomous Legal Compliance Audit</span>
                   </div>
                   
