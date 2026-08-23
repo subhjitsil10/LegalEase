@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Camera, FileText, CheckCircle2, AlertCircle, Sparkles, Volume2, VolumeX, Lock, Globe, ShieldCheck } from 'lucide-react';
+import { Upload, Camera, FileText, CheckCircle2, AlertCircle, Sparkles, Volume2, VolumeX, Lock, Globe, ShieldCheck, AlertTriangle, CheckSquare, Copy, Check } from 'lucide-react';
 import { api } from '../api';
 
 // Intelligent Speech Sanitizer: Strips all special characters, markdown noise, and emojis
@@ -44,6 +44,135 @@ export const cleanTextForSpeech = (markdownText) => {
 
   return text;
 };
+
+// Sleek Interactive Formatter for High-Impact Legal Audit
+function FormattedLegalAudit({ reportText }) {
+  const [copiedIndex, setCopiedIndex] = useState(null);
+
+  if (!reportText) return null;
+
+  // Clean raw symbols & dividers from text
+  const cleanReport = reportText
+    .replace(/^[=\-_]{3,}\s*$/gm, '')
+    .replace(/\*{3,}/g, '')
+    .trim();
+
+  const lines = cleanReport.split('\n');
+
+  const handleCopyRedline = (text, idx) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  return (
+    <div className="space-y-6 text-slate-800">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return null;
+
+        // 1. Major Section Headings (## or 🚨, 📊, 🛡️, 📝)
+        if (trimmed.startsWith('## ') || trimmed.startsWith('# ') || trimmed.includes('RED FLAGS') || trimmed.includes('EXECUTIVE SUMMARY') || trimmed.includes('4-PILLAR') || trimmed.includes('NEXT STEPS')) {
+          const headingText = trimmed.replace(/^#{1,4}\s*/, '').replace(/\*\*/g, '');
+          const isRedFlagHeader = headingText.toUpperCase().includes('RED FLAG');
+          
+          return (
+            <div 
+              key={idx} 
+              className={`pt-4 pb-2 border-b flex items-center gap-2 ${
+                isRedFlagHeader 
+                  ? 'border-red-200 text-red-700 mt-2' 
+                  : 'border-slate-200 text-slate-900 mt-4'
+              }`}
+            >
+              {isRedFlagHeader && <AlertTriangle className="w-5 h-5 text-red-600 animate-bounce" />}
+              <h4 className="text-base sm:text-lg font-black tracking-tight uppercase">
+                {headingText}
+              </h4>
+            </div>
+          );
+        }
+
+        // 2. Red Flag Clause Items with Risk Levels (🔴 HIGH RISK / 🟡 MEDIUM RISK / 🟢 LOW RISK)
+        if (trimmed.includes('HIGH RISK') || trimmed.includes('MEDIUM RISK') || trimmed.includes('LOW RISK') || trimmed.startsWith('- 🔴') || trimmed.startsWith('- 🟡') || trimmed.startsWith('- 🟢')) {
+          const isHigh = trimmed.includes('HIGH') || trimmed.includes('🔴');
+          const isMed = trimmed.includes('MEDIUM') || trimmed.includes('🟡');
+          
+          return (
+            <div 
+              key={idx} 
+              className={`p-4 rounded-2xl border transition-all my-2 shadow-xs ${
+                isHigh 
+                  ? 'bg-red-50/90 border-red-200 text-red-950' 
+                  : isMed 
+                  ? 'bg-amber-50/90 border-amber-200 text-amber-950' 
+                  : 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
+              }`}
+            >
+              <div className="flex items-center gap-2 font-black text-sm">
+                <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-black uppercase tracking-wider text-white shadow-xs ${
+                  isHigh ? 'bg-red-600' : isMed ? 'bg-amber-600' : 'bg-emerald-600'
+                }`}>
+                  {isHigh ? '🔴 High Risk' : isMed ? '🟡 Moderate Risk' : '🟢 Low Risk'}
+                </span>
+                <span>{trimmed.replace(/^[-*•]\s*/, '').replace(/\[.*?\]\s*:?/, '').replace(/\*\*/g, '')}</span>
+              </div>
+            </div>
+          );
+        }
+
+        // 3. Attorney Redlines (Highlighted Box with 1-Click Copy)
+        if (trimmed.toLowerCase().includes('attorney redline') || trimmed.toLowerCase().includes('recommended redline')) {
+          const redlineContent = trimmed.replace(/.*?(attorney redline|recommended redline):?\s*/i, '').replace(/["'`]/g, '');
+          
+          return (
+            <div key={idx} className="my-2 p-3.5 bg-slate-900 text-emerald-300 rounded-xl border border-slate-700 font-mono text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+              <div className="flex items-start gap-2">
+                <span className="text-amber-400 font-bold font-sans text-xs">⚖️ Redline Fix:</span>
+                <span className="leading-relaxed">"{redlineContent}"</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleCopyRedline(redlineContent, idx)}
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-[10px] font-sans font-bold flex items-center gap-1 self-end sm:self-auto transition-all cursor-pointer border border-slate-600"
+                title="Copy suggested attorney wording"
+              >
+                {copiedIndex === idx ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Copy Redline</span>
+                  </>
+                )}
+              </button>
+            </div>
+          );
+        }
+
+        // 4. Actionable Next Steps Checkboxes
+        if (trimmed.match(/^\d+\.\s+/) || (trimmed.startsWith('- ') && trimmed.toLowerCase().includes('negotiate'))) {
+          return (
+            <div key={idx} className="flex items-start gap-2.5 p-2.5 bg-blue-50/60 rounded-xl border border-blue-100 text-xs font-semibold text-slate-800 my-1.5">
+              <CheckSquare className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <span>{trimmed.replace(/^\d+\.\s+/, '').replace(/^[-*•]\s*/, '').replace(/\*\*/g, '')}</span>
+            </div>
+          );
+        }
+
+        // 5. Standard bullet items and text
+        return (
+          <p key={idx} className="text-xs sm:text-sm text-slate-700 leading-relaxed my-1">
+            {trimmed.replace(/^[-*•]\s*/, '• ').replace(/\*\*(.*?)\*\*/g, '$1')}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function DocumentWorkspace({ user, language, setLanguage, onOpenAuth, onOpenSubscription, onAnalysisSuccess, onUserQuotaUpdate }) {
   const [activeTab, setActiveTab] = useState('upload'); // 'upload' or 'camera'
@@ -426,7 +555,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Encrypting & Auditing with Gemini...</span>
+                  <span>Auditing with Gemini 3.1 Pro...</span>
                 </>
               ) : (
                 <>
@@ -447,11 +576,11 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                 <span>{reportData.report}</span>
               </div>
             ) : (
-              <div className="p-6 rounded-2xl bg-white/95 border border-sky-200 shadow-sm">
+              <div className="p-6 sm:p-8 rounded-3xl bg-white/95 border border-sky-200 shadow-xl">
                 
                 {/* 256-Bit Encrypted Vault Sealed Badge */}
                 {reportData.vault_receipt && (
-                  <div className="mb-4 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-emerald-950 shadow-xs">
+                  <div className="mb-6 p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-emerald-950 shadow-xs">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                       <span><strong>Encrypted Vault Record:</strong> {reportData.vault_receipt.vault_id}</span>
@@ -467,16 +596,17 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-200">
-                  <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
+                {/* Header Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
+                  <div className="flex items-center gap-2 text-emerald-700 font-black text-base">
                     <CheckCircle2 className="w-5 h-5" />
-                    <span>Legal Compliance Audit Complete ({reportData.engine || 'Gemini 3.1 Pro'})</span>
+                    <span>Autonomous Legal Audit Report ({reportData.engine || 'Gemini 3.1 Pro'})</span>
                   </div>
                   
                   {/* Clean Voice Narration Button */}
                   <button
                     onClick={toggleAudioBriefing}
-                    className={`px-3.5 py-1.5 border font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+                    className={`px-4 py-2 border font-bold text-xs rounded-xl flex items-center gap-2 transition-all cursor-pointer shadow-xs ${
                       isSpeaking
                         ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100 animate-pulse'
                         : 'bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700'
@@ -490,15 +620,15 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                     ) : (
                       <>
                         <Volume2 className="w-4 h-4 text-blue-600" />
-                        <span>🔊 Audio Briefing</span>
+                        <span>🔊 Executive Audio Briefing</span>
                       </>
                     )}
                   </button>
                 </div>
 
-                <div className="prose prose-slate max-w-none text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
-                  {reportData.report}
-                </div>
+                {/* Formatted Cards Output Viewer */}
+                <FormattedLegalAudit reportText={reportData.report} />
+
               </div>
             )}
           </div>
