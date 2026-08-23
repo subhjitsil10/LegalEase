@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Camera, FileText, CheckCircle2, AlertCircle, Sparkles, Volume2, VolumeX, Lock, Globe, ShieldCheck, AlertTriangle, CheckSquare, Copy, Check } from 'lucide-react';
+import { Upload, Camera, FileText, CheckCircle2, AlertCircle, Sparkles, Volume2, VolumeX, Lock, Globe, ShieldCheck, AlertTriangle, CheckSquare } from 'lucide-react';
 import { api } from '../api';
 
 // Intelligent Speech Sanitizer: Strips all special characters, markdown noise, and emojis
@@ -57,10 +57,8 @@ const sanitizeDisplayLine = (str) => {
     .trim();
 };
 
-// Sleek Interactive Formatter for Eye-Soothing Legal Audit Display
+// Sleek Interactive Formatter for Eye-Soothing Legal Audit Display (Redline removed)
 function FormattedLegalAudit({ reportText }) {
-  const [copiedIndex, setCopiedIndex] = useState(null);
-
   if (!reportText) return null;
 
   // Clean raw symbols & dividers from text
@@ -71,17 +69,16 @@ function FormattedLegalAudit({ reportText }) {
 
   const lines = cleanReport.split('\n');
 
-  const handleCopyRedline = (text, idx) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIndex(idx);
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
-
   return (
     <div className="space-y-4 text-slate-800">
       {lines.map((line, idx) => {
         const rawTrimmed = line.trim();
         if (!rawTrimmed) return null;
+
+        // Skip any leftover Attorney Redline lines if present
+        if (rawTrimmed.toLowerCase().includes('attorney redline') || rawTrimmed.toLowerCase().includes('recommended redline')) {
+          return null;
+        }
 
         // 1. Major Section Headings (Soft Eye-Soothing Blue-Slate Style)
         if (
@@ -156,40 +153,7 @@ function FormattedLegalAudit({ reportText }) {
           );
         }
 
-        // 3. Attorney Redlines (Soft Eye-Soothing Indigo/Slate Box with 1-Click Copy)
-        if (rawTrimmed.toLowerCase().includes('attorney redline') || rawTrimmed.toLowerCase().includes('recommended redline')) {
-          const rawRedline = rawTrimmed.replace(/.*?(attorney redline|recommended redline):?\s*/i, '');
-          const cleanRedline = sanitizeDisplayLine(rawRedline).replace(/["'`]/g, '');
-          
-          return (
-            <div key={idx} className="my-2 p-3 bg-gradient-to-r from-slate-900 to-indigo-950 text-indigo-100 rounded-xl border border-indigo-900/50 font-mono text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs">
-              <div className="flex items-start gap-2">
-                <span className="text-amber-300 font-bold font-sans text-xs flex-shrink-0">⚖️ Attorney Redline:</span>
-                <span className="leading-relaxed text-slate-100 font-mono">"{cleanRedline}"</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleCopyRedline(cleanRedline, idx)}
-                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-sans font-medium flex items-center gap-1 self-end sm:self-auto transition-all cursor-pointer border border-white/10 shadow-xs"
-                title="Copy suggested attorney wording"
-              >
-                {copiedIndex === idx ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3 text-slate-300" />
-                    <span>Copy Redline</span>
-                  </>
-                )}
-              </button>
-            </div>
-          );
-        }
-
-        // 4. Actionable Next Steps Checkboxes (Soft Pastel Tint)
+        // 3. Actionable Next Steps Checkboxes (Soft Pastel Tint)
         if (rawTrimmed.match(/^\d+\.\s+/) || (rawTrimmed.startsWith('- ') && rawTrimmed.toLowerCase().includes('negotiate'))) {
           const cleanStep = sanitizeDisplayLine(rawTrimmed.replace(/^\d+\.\s+/, '').replace(/^[-*•]\s*/, ''));
           return (
@@ -200,7 +164,7 @@ function FormattedLegalAudit({ reportText }) {
           );
         }
 
-        // 5. Standard bullet items and text
+        // 4. Standard bullet items and text
         const cleanContent = sanitizeDisplayLine(rawTrimmed.replace(/^[-*•]\s*/, '• '));
         if (!cleanContent) return null;
 
@@ -324,7 +288,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
     }
   };
 
-  // Audio Speech Handler (with Bhojpuri and Indian regional language support)
+  // Audio Speech Handler (Supports English, Hindi, Bangla, Tamil)
   const toggleAudioBriefing = () => {
     if (!('speechSynthesis' in window)) {
       alert('Speech synthesis is not supported on this browser.');
@@ -346,7 +310,9 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
     utterance.pitch = 1.0;
 
     // Adjust language code
-    if (language?.includes('Hindi') || language?.includes('Bhojpuri')) {
+    if (language?.includes('Tamil')) {
+      utterance.lang = 'ta-IN';
+    } else if (language?.includes('Hindi')) {
       utterance.lang = 'hi-IN';
     } else if (language?.includes('Bangla')) {
       utterance.lang = 'bn-IN';
@@ -425,7 +391,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
               Document Compliance Studio
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              Upload or scan your agreement for autonomous 4-pillar risk & redline analysis.
+              Upload or scan your agreement for autonomous 4-pillar risk analysis.
             </p>
           </div>
 
@@ -440,7 +406,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
           )}
         </div>
 
-        {/* Tabs and Output Language Selector (Supports English, Hindi, Bangla, Bhojpuri) */}
+        {/* Tabs and Output Language Selector (Supports English, Hindi, Bangla, Tamil) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           
           {/* Tabs */}
@@ -481,7 +447,7 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                 <option value="English">English</option>
                 <option value="Hindi (हिंदी)">Hindi (हिंदी)</option>
                 <option value="Bangla (বাংলা)">Bangla (বাংলা)</option>
-                <option value="Bhojpuri (भोजपुरी)">Bhojpuri (भोजपुरी)</option>
+                <option value="Tamil (தமிழ்)">Tamil (தமிழ்)</option>
               </select>
             </div>
           </div>
@@ -648,8 +614,8 @@ export default function DocumentWorkspace({ user, language, setLanguage, onOpenA
                 )}
 
                 {/* Header Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b-2 border-slate-900">
-                  <div className="flex items-center gap-2 text-slate-950 font-black text-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-200">
+                  <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     <span>Autonomous Legal Compliance Audit</span>
                   </div>

@@ -28,7 +28,6 @@ For each dangerous clause or trap found in the document, list:
 - [🔴 HIGH RISK] or [🟡 MEDIUM RISK] or [🟢 LOW RISK]: [Name of Clause]
   • Issue: [1 brief sentence explaining the unfair clause or hidden trap]
   • Signer Impact: [Direct financial, career, or legal penalty to the signer]
-  • Attorney Redline: "[Exact replacement text or fix to demand]"
 
 ## 📊 EXECUTIVE SUMMARY & COMPLIANCE SCORE
 - Document Type: [e.g. Employment Contract / Residential Lease / NDA]
@@ -92,7 +91,7 @@ export const auditDocumentWithGemini = async (file, language = 'English', isProM
     ${LEGAL_PLAYBOOK}
     =========================================
     CRITICAL LANGUAGE INSTRUCTION:
-    If and ONLY if the document is verified as an authentic legal document, respond entirely and fluently in ${language} (including authentic Bhojpuri if Bhojpuri is chosen, or Hindi, Bangla, English).
+    If and ONLY if the document is verified as an authentic legal document, respond entirely and fluently in ${language} (including authentic Tamil if Tamil is chosen, or Hindi, Bangla, English).
     If this is NOT a legal document, do NOT translate, do NOT provide any descriptions, and respond ONLY with:
     ${NON_LEGAL_DOCUMENT_MESSAGE}
     `;
