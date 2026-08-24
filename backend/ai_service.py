@@ -42,10 +42,22 @@ def analyze_legal_document(file_bytes: bytes, filename: str, language: str = "En
         {NON_LEGAL_DOCUMENT_MESSAGE}
         """
         
-        response = client.models.generate_content(
-            model='gemini-3.6-flash',
-            contents=[gemini_file, prompt]
-        )
+        CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
+        response = None
+        last_error = None
+        for model_name in CANDIDATE_MODELS:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=[gemini_file, prompt]
+                )
+                break
+            except Exception as model_err:
+                print(f"Backend model {model_name} notice: {model_err}")
+                last_error = model_err
+
+        if not response:
+            raise last_error or Exception("All Gemini models temporarily unavailable.")
         
         resp_text = (response.text or "").strip()
         resp_lower = resp_text.lower()
@@ -129,10 +141,22 @@ def chat_with_legal_counsel(query: str, doc_temp_path: str = None, language: str
             """
             contents = [chat_prompt]
             
-        response = client.models.generate_content(
-            model='gemini-3.6-flash',
-            contents=contents
-        )
+        CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']
+        response = None
+        last_error = None
+        for model_name in CANDIDATE_MODELS:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=contents
+                )
+                break
+            except Exception as model_err:
+                print(f"Backend counsel model {model_name} notice: {model_err}")
+                last_error = model_err
+
+        if not response:
+            raise last_error or Exception("All Gemini models temporarily unavailable.")
         
         resp_text = (response.text or "").strip()
         resp_lower = resp_text.lower()

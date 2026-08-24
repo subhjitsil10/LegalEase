@@ -118,6 +118,55 @@ export const prepareContentPayload = async (file, prompt) => {
   return [filePart, prompt];
 };
 
+const CANDIDATE_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite'
+];
+
+export const generateWithResilience = async (contents) => {
+  if (!ai) {
+    throw new Error('Google Gemini API key not found. Please set VITE_GEMINI_API_KEY in your Vercel Environment Variables.');
+  }
+
+  let lastErr = null;
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents
+      });
+      const engineName = model === 'gemini-3.6-flash' ? 'Gemini 3.6 Flash' : model === 'gemini-3.5-flash' ? 'Gemini 3.5 Flash' : 'Gemini 3.5 Flash-Lite';
+      return {
+        text: (response.text || '').trim(),
+        engine: engineName
+      };
+    } catch (err) {
+      console.warn(`Model ${model} unavailable or rate-limited, cascading to next model:`, err.message);
+      lastErr = err;
+    }
+  }
+
+  let msg = lastErr?.message || 'Gemini service temporarily unavailable';
+  try {
+    if (msg.includes('{')) {
+      const jsonMatch = msg.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (parsed.error?.message) {
+          msg = parsed.error.message;
+        }
+      }
+    }
+  } catch (_) {}
+
+  if (msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('resource_exhausted') || msg.includes('429')) {
+    msg = 'Gemini API daily request quota reached for the free tier. Please wait for the daily quota reset or attach billing in Google AI Studio.';
+  }
+
+  throw new Error(msg);
+};
+
 export const auditDocumentWithGemini = async (file, language = 'English', isProModel = false) => {
   if (!ai) {
     return {
@@ -136,15 +185,7 @@ export const auditDocumentWithGemini = async (file, language = 'English', isProM
     ${NON_LEGAL_DOCUMENT_MESSAGE}
     `);
 
-    // Standard & Pro audits powered by Gemini 3.6 Flash
-    const modelToUse = 'gemini-3.6-flash';
-
-    const response = await ai.models.generateContent({
-      model: modelToUse,
-      contents
-    });
-
-    const respText = (response.text || '').trim();
+    const { text: respText, engine: engineUsed } = await generateWithResilience(contents);
     const respLower = respText.toLowerCase();
 
     // Strict validation check for non-legal documents
@@ -163,7 +204,7 @@ export const auditDocumentWithGemini = async (file, language = 'English', isProM
         success: true,
         is_legal: false,
         report: NON_LEGAL_DOCUMENT_MESSAGE,
-        engine: 'Gemini 3.6 Flash'
+        engine: engineUsed || 'Gemini 3.6 Flash'
       };
     }
 
@@ -171,7 +212,7 @@ export const auditDocumentWithGemini = async (file, language = 'English', isProM
       success: true,
       is_legal: true,
       report: respText,
-      engine: 'Gemini 3.6 Flash'
+      engine: engineUsed || 'Gemini 3.6 Flash'
     };
   } catch (err) {
     console.error('Gemini Audit Error:', err);
@@ -207,20 +248,17 @@ export const chatWithLegalCounsel = async (userMessage, documentContext = '', la
     - Fluently reply in ${language}.
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: [prompt]
-    });
+    const { text: replyText } = await generateWithResilience([prompt]);
 
     return {
       success: true,
-      reply: response.text
+      reply: replyText
     };
   } catch (err) {
     console.error('Chat Error:', err);
     return {
       success: false,
-      error: 'Failed to consult Legal Counsel. Please try again.'
+      error: `Failed to consult Legal Counsel: ${err.message}`
     };
   }
 };
