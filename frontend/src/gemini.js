@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import mammoth from 'mammoth';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.GEMINI_API_KEY || '';
 
@@ -77,6 +78,46 @@ export const fileToGenerativePart = async (file) => {
   });
 };
 
+export const prepareContentPayload = async (file, prompt) => {
+  const fileName = (file.name || '').toLowerCase();
+
+  // 1. If DOCX file, extract text via mammoth for 100% reliable Gemini processing
+  if (fileName.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      const docxText = (result?.value || '').trim();
+      if (docxText) {
+        return [
+          {
+            text: `DOCUMENT CONTENT (Extracted from ${file.name}):\n\n${docxText}\n\n=========================================\n${prompt}`
+          }
+        ];
+      }
+    } catch (docxErr) {
+      console.warn('DOCX mammoth extraction fallback:', docxErr);
+    }
+  }
+
+  // 2. If Plain Text / Markdown / CSV
+  if (fileName.endsWith('.txt') || fileName.endsWith('.md') || fileName.endsWith('.csv') || (file.type && file.type.startsWith('text/'))) {
+    try {
+      const text = await file.text();
+      return [
+        {
+          text: `DOCUMENT CONTENT (from ${file.name}):\n\n${text}\n\n=========================================\n${prompt}`
+        }
+      ];
+    } catch (txtErr) {
+      console.warn('Text file read error:', txtErr);
+    }
+  }
+
+  // 3. For PDF and Image files (PNG, JPG, WEBP)
+  const filePart = await fileToGenerativePart(file);
+  return [filePart, prompt];
+};
+
 export const auditDocumentWithGemini = async (file, language = 'English', isProModel = false) => {
   if (!ai) {
     return {
@@ -86,33 +127,22 @@ export const auditDocumentWithGemini = async (file, language = 'English', isProM
   }
 
   try {
-    const filePart = await fileToGenerativePart(file);
-    const prompt = `
+    const contents = await prepareContentPayload(file, `
     ${LEGAL_PLAYBOOK}
     =========================================
     CRITICAL LANGUAGE INSTRUCTION:
     If and ONLY if the document is verified as an authentic legal document, respond entirely and fluently in ${language} (including authentic Tamil if Tamil is chosen, or Hindi, Bangla, English).
     If this is NOT a legal document, do NOT translate, do NOT provide any descriptions, and respond ONLY with:
     ${NON_LEGAL_DOCUMENT_MESSAGE}
-    `;
+    `);
 
-    // Use Gemini 3.1 Pro (or Pro Reasoning Tier) for Pro Pack users, and Gemini 3.6 Flash for standard users
-    const primaryModel = isProModel ? 'gemini-3.1-pro' : 'gemini-3.6-flash';
-    const fallbackModel = 'gemini-2.5-flash';
+    // Standard & Pro audits powered by Gemini 3.6 Flash
+    const modelToUse = 'gemini-3.6-flash';
 
-    let response;
-    try {
-      response = await ai.models.generateContent({
-        model: primaryModel,
-        contents: [filePart, prompt]
-      });
-    } catch (modelErr) {
-      console.warn(`Primary model ${primaryModel} notice, falling back:`, modelErr);
-      response = await ai.models.generateContent({
-        model: fallbackModel,
-        contents: [filePart, prompt]
-      });
-    }
+    const response = await ai.models.generateContent({
+      model: modelToUse,
+      contents
+    });
 
     const respText = (response.text || '').trim();
     const respLower = respText.toLowerCase();
@@ -133,7 +163,7 @@ export const auditDocumentWithGemini = async (file, language = 'English', isProM
         success: true,
         is_legal: false,
         report: NON_LEGAL_DOCUMENT_MESSAGE,
-        engine: isProModel ? 'Gemini 3.1 Pro' : 'Gemini 3.6 Flash'
+        engine: 'Gemini 3.6 Flash'
       };
     }
 
@@ -141,7 +171,7 @@ export const auditDocumentWithGemini = async (file, language = 'English', isProM
       success: true,
       is_legal: true,
       report: respText,
-      engine: isProModel ? 'Gemini 3.1 Pro' : 'Gemini 3.6 Flash'
+      engine: 'Gemini 3.6 Flash'
     };
   } catch (err) {
     console.error('Gemini Audit Error:', err);
